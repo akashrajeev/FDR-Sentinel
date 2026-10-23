@@ -8,7 +8,7 @@ from fastapi import Depends, FastAPI, File, Form, Header, HTTPException, Request
 from fastapi.responses import JSONResponse, Response
 from prometheus_client import CONTENT_TYPE_LATEST, Counter, Histogram, generate_latest
 from redis import Redis
-from sqlalchemy import select, text
+from sqlalchemy import or_, select, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -16,7 +16,8 @@ from sentinel import services
 from sentinel.auth import Actor, authenticate, require_scope
 from sentinel.config import settings
 from sentinel.db import get_db
-from sentinel.models import AuditEvent, Deposit, Document, Institution, Obligation, Outbox
+from sentinel.lifecycle_api import router as lifecycle_router
+from sentinel.models import AuditEvent, Deposit, Document, Institution, Obligation, Outbox, ReleaseCase
 from sentinel.schemas import (
     AuditOut,
     Correction,
@@ -37,6 +38,7 @@ from sentinel.transactions import audit, mutate
 
 app = FastAPI(title='FDR Sentinel', version='0.1.0',
               description='Synthetic regulatory workflow. Registration review is not bank verification or release.')
+app.include_router(lifecycle_router)
 logger = logging.getLogger('sentinel.http')
 requests_total = Counter('sentinel_http_requests_total', 'HTTP requests', ['method', 'route', 'status'])
 duration = Histogram('sentinel_http_duration_seconds', 'HTTP request duration', ['route'])
@@ -156,8 +158,10 @@ def deposits(institution_id: str | None = None, actor: Actor = Depends(authentic
     if institution_id:
         require_scope(actor, institution_id)
         ids = [institution_id]
+    case_deposits = select(ReleaseCase.deposit_id).where(ReleaseCase.id.in_(actor.case_ids()))
     return [services.dto(i, DepositOut) for i in db.scalars(select(Deposit).where(
-        Deposit.institution_id.in_(ids)).order_by(Deposit.created_at.desc()).limit(100))]
+        or_(Deposit.institution_id.in_(ids), Deposit.id.in_(case_deposits))).order_by(
+        Deposit.created_at.desc()).limit(100))]
 
 
 @app.get('/api/v1/deposits/{deposit_id}', response_model=DepositDetail)
@@ -192,7 +196,7 @@ def document_content(document_id: str, request: Request, actor: Actor = Depends(
     document = db.get(Document, document_id)
     if not document:
         raise HTTPException(404, 'Resource not found')
-    require_scope(actor, document.institution_id)
+    services.get_deposit(db, actor, document.deposit_id)
     if document.status != 'READY':
         raise HTTPException(409, 'Document quarantined or unavailable')
     try:

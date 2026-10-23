@@ -43,7 +43,29 @@ rule result. It never creates bank confirmation, regulatory eligibility, NOC or 
 Unknown/provisional policy yields REVIEW and is displayed to the officer; known FAIL
 blocks acceptance, while safe deficient records may enter scrutiny. Missing document extraction requires human evidence review.
 
-## Later contracts (unimplemented)
+## Lifecycle milestone contracts
+
+Implemented in Phase 1B once its tests pass: POST/GET `/release-cases`, GET
+`/release-cases/{id}`, POST `{id}/documents`, `{id}/submit`,
+`{id}/clearances/{bureau}/decision`, `{id}/return`, `{id}/holds`,
+`{id}/holds/{hold_id}/resolve`, `{id}/approve`, `{id}/issue-document`.
+POST/GET `/replacements`, POST `/replacements/{id}/approve`, POST `/monitoring/run`
+and GET `/notifications`. Expected versions, idempotency and scope checks apply.
+
+Release evidence is separate from deposit registration evidence and does not invalidate
+the accepted registration evaluation. Return-for-correction increments the release
+input revision and invalidates prior clearances without deleting their history. Pending
+or rejected bureaus and active holds block approval/issuance. Final approver cannot be
+maker, prior registration reviewer or any prior clearance actor, even after role changes.
+Issuer must be independently scoped to APPROVAL_BUREAU (FDR/RPGF) or COUNCIL (RTGS/ONLINE).
+All generated results are SYNTHETIC, carry no financial authority and never mark bank
+settlement or deposit RELEASED. TERM_COMPLETED for RTGS/ONLINE checks the calendar ten-year
+anniversary from deposited_on; exception reasons require branch evidence and human review.
+
+Case-only role bindings grant only the case and its deposit/evidence, not all institution
+records. Current list endpoints are bounded to 100; large reports need cursor pagination.
+
+## Later extended contracts (unimplemented)
 
 Versioned obligations/evaluate, verify (SIMULATED/authorized ports), corrections,
 replacement and renewal requests, release-cases/submit, bureau decisions, approve and

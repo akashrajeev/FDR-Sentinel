@@ -8,7 +8,7 @@ from sqlalchemy import or_, select
 from sentinel.config import settings
 from sentinel.db import session_factory
 from sentinel.document_pipeline import validate_and_extract
-from sentinel.models import Deposit, Document, Outbox, now
+from sentinel.models import Deposit, Document, Outbox, ReleaseCase, now
 from sentinel.storage import read_original, scan_bytes
 from sentinel.transactions import audit
 
@@ -18,9 +18,19 @@ celery.conf.update(
     task_acks_late=True, worker_prefetch_multiplier=1,
     task_time_limit=120, task_soft_time_limit=100, broker_connection_retry_on_startup=True,
     broker_transport_options={'visibility_timeout': 300},
-    beat_schedule={'outbox': {'task': 'sentinel.publish_outbox', 'schedule': 3.0}},
+    beat_schedule={'outbox': {'task': 'sentinel.publish_outbox', 'schedule': 3.0},
+                   'maturity': {'task': 'sentinel.maturity', 'schedule': 3600.0}},
 )
 logger = logging.getLogger(__name__)
+
+
+@celery.task(name='sentinel.maturity')
+def scheduled_maturity():
+    from sentinel.lifecycle import run_maturity, today
+    with session_factory()() as db:
+        result = run_maturity(db, today())
+        db.commit()
+        return result
 
 
 @celery.task(name='sentinel.publish_outbox')
@@ -48,8 +58,10 @@ def process_document(self, event_id):
         document = db.get(Document, event.aggregate_id)
         # Same lock order as API: deposit -> document -> event.
         deposit = db.scalar(select(Deposit).where(Deposit.id == document.deposit_id).with_for_update())
-        document = db.scalar(select(Document).where(Document.id == document.id).with_for_update())
-        event = db.scalar(select(Outbox).where(Outbox.id == event_id).with_for_update())
+        document = db.scalar(select(Document).where(Document.id == document.id).with_for_update()
+                             .execution_options(populate_existing=True))
+        event = db.scalar(select(Outbox).where(Outbox.id == event_id).with_for_update()
+                          .execution_options(populate_existing=True))
         if event.completed_at:
             return 'ALREADY_COMPLETED'
         try:
@@ -79,6 +91,9 @@ def process_document(self, event_id):
             logger.warning('document_processing_failed event_id=%s error_type=%s', event_id, type(exc).__name__)
             raise self.retry(exc=RuntimeError('Document processor unavailable'), countdown=15 * (self.request.retries + 1))
         deposit.version += 1
+        if document.release_case_id:
+            case = db.scalar(select(ReleaseCase).where(ReleaseCase.id == document.release_case_id).with_for_update())
+            case.version += 1
         audit(db, deposit.institution_id, 'worker', 'DOCUMENT_' + document.status, deposit.id,
               {'document_id': document.id, 'event_id': event.id, 'sha256': document.sha256}, event.id)
         db.commit()

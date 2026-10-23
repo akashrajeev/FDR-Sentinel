@@ -39,3 +39,37 @@ Incomplete: lifecycle/release (Phase 1B), OCR/AI and simulated bank attestation 
 full historic policy/exceptions, production MFA/key management/retention, trace export,
 load and restore qualification. No bank/AICTE integration, legal certification, release
 or payment is claimed. Next milestone: live PGRC-blocked synthetic lifecycle path.
+
+## Phase 1B — completed thin lifecycle skeleton
+
+Added calendar-based maturity state/in-app reminders; deduplicated notifications;
+requested and independently authorized replacement/renewal lineage; typed release cases;
+separate scanned release evidence; PGRC/Vigilance/Grants decisions; exception evidence
+and holds; return/correction with retained invalidated clearances; independent approval;
+type-specific independently issued SYNTHETIC NOC/sanction PDFs in private storage.
+Case-only scopes do not grant institution-wide access. Permanent subject comparisons
+prevent maker/checker bypass after role changes. Originals and clearance history have
+database guards. No release settlement or payment movement exists.
+
+Executed evidence:
+
+* `docker compose --profile test run --rm test`: **36 passed**, 2 browser tests deselected,
+  12.98s. Includes pending PGRC, cross-bureau denial, RTGS no invented FDR dates/sanction,
+  closure/merger/conversion/other holds, stale concurrent officers, scope/role-change
+  restrictions, deduplicated reminders and retained replacement lineage.
+* `.venv\Scripts\python scripts/local.py -m pytest -q -m browser`: **2 passed**,
+  36 deselected, 25.01s. Real sessions for maker, reviewer/Grants, Vigilance, PGRC,
+  approver and issuer; approval actually rejected while PGRC pending, then synthetic
+  issuance completes. Both result screenshots visually inspected.
+* TypeScript/Vite build and Ruff passed; updated Compose API/web/worker/Beat running.
+
+Fixed failure: locked SQLAlchemy reads must refresh existing identity-map objects;
+otherwise a competing clearance could observe stale in-memory version after waiting.
+Regression now races two distinct bureau actors and requires one 200 / one 409.
+Browser selector was adjusted to include the navigation icon's accessible name.
+
+Remaining: Phase 2 OCR/optional AI assistance, realistic extraction measurements,
+SIMULATED bank-source adapter and degradation/dead-letter controls; extended historic
+policy cases, reporting/exports; Phase 4 security/load/restore qualification. The eight
+design documents and provisional-source restrictions remain applicable. This checkpoint
+is a working synthetic lifecycle, not a production certification or authorized integration.

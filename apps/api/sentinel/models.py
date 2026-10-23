@@ -119,6 +119,7 @@ class Document(Base):
     category: Mapped[str] = mapped_column(String(32))
     active: Mapped[bool] = mapped_column(Boolean, default=True)
     supersedes_id: Mapped[str | None] = mapped_column(ForeignKey('documents.id'))
+    release_case_id: Mapped[str | None] = mapped_column(ForeignKey('release_cases.id'), index=True)
     object_key: Mapped[str] = mapped_column(String(160), unique=True)
     sha256: Mapped[str] = mapped_column(String(64))
     size: Mapped[int] = mapped_column(BigInteger)
@@ -185,4 +186,84 @@ class IdempotencyRecord(Base):
     key: Mapped[str] = mapped_column(String(128))
     fingerprint: Mapped[str] = mapped_column(String(64))
     response: Mapped[dict] = mapped_column(JSON)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+
+class ReleaseCase(Base):
+    __tablename__ = 'release_cases'
+    __table_args__ = (
+        CheckConstraint("reason IN ('TERM_COMPLETED','CLOSURE','MERGER','CONVERSION','OTHER')"),
+        CheckConstraint("state IN ('DRAFT','CLEARANCES_PENDING','APPROVAL_REVIEW','APPROVED_SYNTHETIC','ISSUED_SYNTHETIC')"),
+    )
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
+    deposit_id: Mapped[str] = mapped_column(ForeignKey('deposit_records.id'), unique=True)
+    institution_id: Mapped[str] = mapped_column(ForeignKey('institutions.id'), index=True)
+    reason: Mapped[str] = mapped_column(String(24))
+    state: Mapped[str] = mapped_column(String(32), default='DRAFT')
+    required_bureaus: Mapped[list] = mapped_column(JSON, default=lambda: ['PGRC', 'VIGILANCE', 'GRANTS'])
+    maker: Mapped[str] = mapped_column(String(128))
+    approver: Mapped[str | None] = mapped_column(String(128))
+    issuer: Mapped[str | None] = mapped_column(String(128))
+    regulatory_basis: Mapped[str | None] = mapped_column(String(2000))
+    version: Mapped[int] = mapped_column(Integer, default=1)
+    input_revision: Mapped[int] = mapped_column(Integer, default=1)
+    submitted_document_hash: Mapped[str | None] = mapped_column(String(64))
+    output_document_id: Mapped[str | None] = mapped_column(String(36))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+
+class ClearanceDecision(Base):
+    __tablename__ = 'clearance_decisions'
+    __table_args__ = (UniqueConstraint('case_id', 'bureau', 'input_revision'),)
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
+    case_id: Mapped[str] = mapped_column(ForeignKey('release_cases.id'), index=True)
+    bureau: Mapped[str] = mapped_column(String(32))
+    input_revision: Mapped[int] = mapped_column(Integer)
+    actor: Mapped[str] = mapped_column(String(128))
+    decision: Mapped[str] = mapped_column(String(16))
+    reason: Mapped[str] = mapped_column(String(2000))
+    evidence_document_id: Mapped[str] = mapped_column(ForeignKey('documents.id'))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+
+class Hold(Base):
+    __tablename__ = 'holds'
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
+    case_id: Mapped[str] = mapped_column(ForeignKey('release_cases.id'), index=True)
+    reason: Mapped[str] = mapped_column(String(2000))
+    authority: Mapped[str] = mapped_column(String(128))
+    active: Mapped[bool] = mapped_column(Boolean, default=True)
+    resolved_by: Mapped[str | None] = mapped_column(String(128))
+    resolution: Mapped[str | None] = mapped_column(String(2000))
+    evidence_document_id: Mapped[str | None] = mapped_column(ForeignKey('documents.id'))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+
+class Replacement(Base):
+    __tablename__ = 'instrument_relationships'
+    __table_args__ = (UniqueConstraint('old_deposit_id'), UniqueConstraint('new_deposit_id'),
+                     CheckConstraint('old_deposit_id != new_deposit_id'))
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
+    old_deposit_id: Mapped[str] = mapped_column(ForeignKey('deposit_records.id'))
+    new_deposit_id: Mapped[str] = mapped_column(ForeignKey('deposit_records.id'))
+    institution_id: Mapped[str] = mapped_column(ForeignKey('institutions.id'), index=True)
+    kind: Mapped[str] = mapped_column(String(20))
+    state: Mapped[str] = mapped_column(String(20), default='REQUESTED')
+    maker: Mapped[str] = mapped_column(String(128))
+    checker: Mapped[str | None] = mapped_column(String(128))
+    rationale: Mapped[str] = mapped_column(String(2000))
+    evidence_document_id: Mapped[str] = mapped_column(ForeignKey('documents.id'))
+    version: Mapped[int] = mapped_column(Integer, default=1)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+
+class Notification(Base):
+    __tablename__ = 'notifications'
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
+    institution_id: Mapped[str] = mapped_column(ForeignKey('institutions.id'), index=True)
+    deposit_id: Mapped[str] = mapped_column(ForeignKey('deposit_records.id'))
+    dedupe_key: Mapped[str] = mapped_column(String(160), unique=True)
+    recipient: Mapped[str] = mapped_column(String(128))
+    kind: Mapped[str] = mapped_column(String(32))
+    detail: Mapped[dict] = mapped_column(JSON)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)

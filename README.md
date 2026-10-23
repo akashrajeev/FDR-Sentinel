@@ -67,8 +67,10 @@ old evidence while preserving it. Rules are narrowly scoped, versioned, provisio
 2024-27 fixtures. Unknown legal context requires review. Manual review never claims bank
 authenticity. AI/workers cannot authorize regulatory or financial decisions.
 
-No release, NOC or payment action is available until the lifecycle milestone's controls
-and tests pass. SYNTHETIC output remains visibly distinct from official documents.
+The Release cases tab now demonstrates scoped PGRC/Vigilance/Grants clearances,
+independent approval and type-specific synthetic issuance. Only synthetic NOC/sanction
+outputs are generated; they carry no financial authority and do not mark settlement.
+The same tab provides maturity monitoring and authorized replacement/renewal lineage.
 
 Never run destructive volume resets on any environment with needed data. For local
 restarts use `docker compose stop` / `docker compose up -d`; named volumes retain records.

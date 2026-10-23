@@ -25,12 +25,15 @@ def seed(db):
                           context=CONTEXT, required_amount_paise=350000000, policy_revision=POLICY_REVISION))
     bindings = [(0, 'MAKER', 'INSTITUTION', INSTITUTION_ID),
                 (2, 'REVIEWER', 'INSTITUTION', INSTITUTION_ID),
+                (2, 'CLEARANCE', 'BUREAU', 'GRANTS'),
                 (3, 'AUDITOR', 'INSTITUTION', INSTITUTION_ID),
                 (3, 'CLEARANCE', 'BUREAU', 'PGRC'),
                 (4, 'AUDITOR', 'INSTITUTION', INSTITUTION_ID),
                 (4, 'CLEARANCE', 'BUREAU', 'VIGILANCE'),
                 (5, 'APPROVER', 'INSTITUTION', INSTITUTION_ID),
                 (6, 'ISSUER', 'INSTITUTION', INSTITUTION_ID),
+                (6, 'ISSUER', 'BUREAU', 'APPROVAL_BUREAU'),
+                (6, 'ISSUER', 'BUREAU', 'COUNCIL'),
                 (7, 'AUDITOR', 'INSTITUTION', INSTITUTION_ID)]
     for index, role, scope_type, scope_id in bindings:
         if not db.scalar(select(RoleBinding.id).where(RoleBinding.subject == subjects[index],

@@ -15,7 +15,7 @@ def test_real_oidc_auth_and_forgery(clients):
     from sentinel.main import app
     assert clients().get('/api/v1/me').status_code == 200
     assert TestClient(app).get('/api/v1/me').status_code == 401
-    forged = jwt.encode({'sub': 'admin', 'aud': 'sentinel-api'}, 'not-a-real-key', algorithm='HS256')
+    forged = jwt.encode({'sub': 'admin', 'aud': 'sentinel-api'}, 'synthetic-forgery-key-with-no-authority-0000', algorithm='HS256')
     assert TestClient(app).get('/api/v1/me', headers={'Authorization': 'Bearer ' + forged}).status_code == 401
 
 

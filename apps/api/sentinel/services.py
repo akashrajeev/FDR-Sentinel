@@ -16,6 +16,7 @@ from sentinel.models import (
     Institution,
     Obligation,
     Outbox,
+    ReleaseCase,
     ReviewDecision,
     RoleBinding,
     uid,
@@ -32,11 +33,16 @@ def dto(model, schema):
 def get_deposit(db: Session, actor: Actor, deposit_id: str, lock=False, roles=None):
     query = select(Deposit).where(Deposit.id == deposit_id)
     if lock:
-        query = query.with_for_update()
+        query = query.with_for_update().execution_options(populate_existing=True)
     deposit = db.scalar(query)
     if not deposit:
         raise HTTPException(404, 'Resource not found')
-    require_scope(actor, deposit.institution_id, roles)
+    if not roles and deposit.institution_id not in actor.institution_ids():
+        if not db.scalar(select(ReleaseCase.id).where(ReleaseCase.deposit_id == deposit.id,
+                                                      ReleaseCase.id.in_(actor.case_ids()))):
+            raise HTTPException(404, 'Resource not found')
+    else:
+        require_scope(actor, deposit.institution_id, roles)
     return deposit
 
 
@@ -91,7 +97,7 @@ def create_deposit(db, actor, body, request_id):
 
 
 def documents_for(db, deposit, active_only=True):
-    query = select(Document).where(Document.deposit_id == deposit.id)
+    query = select(Document).where(Document.deposit_id == deposit.id, Document.release_case_id.is_(None))
     if active_only:
         query = query.where(Document.active.is_(True))
     return db.scalars(query.order_by(Document.id)).all()

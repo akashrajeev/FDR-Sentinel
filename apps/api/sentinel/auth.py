@@ -33,6 +33,10 @@ class Actor:
     def institution_ids(self):
         return sorted({b.scope_id for b in self.bindings if b.scope_type == 'INSTITUTION'})
 
+    def case_ids(self, roles=None):
+        return sorted({b.scope_id for b in self.bindings if b.scope_type == 'CASE'
+                       and (not roles or b.role in roles)})
+
 
 def authenticate(credentials: HTTPAuthorizationCredentials | None = Depends(bearer),
                  db: Session = Depends(get_db)) -> Actor:

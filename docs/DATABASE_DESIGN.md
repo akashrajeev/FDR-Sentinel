@@ -26,6 +26,12 @@ Returns move back to DRAFT. Explicit correction changes input_revision. New immu
 
 ## Transaction and storage boundaries
 
+Locked ORM reads explicitly use populate_existing: waiting for a row lock must refresh
+the identity-map value, otherwise optimistic-version checks can observe stale memory.
+Clearance history has (case_id, bureau, input_revision) uniqueness and append-only
+triggers. Document original identifiers/hash/object key are guarded against UPDATE.
+Case input revisions are independent of deposit input revisions.
+
 Sensitive services lock the aggregate SELECT FOR UPDATE, check version/state, append
 decision/evaluation/audit/outbox and increment version in one transaction. Unique
 idempotency records serialize concurrent same-key requests (database advisory transaction

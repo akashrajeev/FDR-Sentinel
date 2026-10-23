@@ -26,6 +26,14 @@ Phase 1; scanned/OCR and optional AI assistance are later work, never falsely ad
 
 ## Later judging scenario
 
+Phase 1B brings the deterministic PGRC-blocked release skeleton forward: use the Release
+cases tab, upload scanned request/Affidavit/approval evidence, submit, record Vigilance
+and Grants clearance, attempt approval as `approver` and observe PGRC PENDING. Clear PGRC
+as `pgrc`; approve independently as `approver`; issue a visibly synthetic NOC as `issuer`.
+RTGS uses a ten-year deposited_on anniversary and a synthetic sanction-order branch.
+The `reviewer` account is also explicitly bound to the GRANTS bureau for the local demo;
+it cannot perform final approval. All scopes are server controlled.
+
 D2 evidence mismatch -> correction; D9 SIMULATED bank source; D4 maturity warning;
 D5 replacement with retained original; D6 attempted release blocked by PGRC; D7 scoped
 PGRC and Vigilance clearance then competent independent approval and SYNTHETIC draft
