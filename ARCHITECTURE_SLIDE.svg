@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+<defs>
+ <marker id="arr" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto" markerUnits="strokeWidth"><path d="M0 0 L10 5 L0 10 z" fill="#51617a"/></marker>
+ <filter id="shadow"><feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#14263c" flood-opacity=".09"/></filter>
+</defs>
+<rect width="1600" height="900" fill="#f7f9fc"/>
+<rect width="1600" height="14" fill="#155c96"/>
+<text x="78" y="77" fill="#11293e" font-family="Arial, sans-serif" font-size="43" font-weight="700">FDR Sentinel</text>
+<text x="375" y="75" fill="#3b647e" font-family="Arial, sans-serif" font-size="27">Policy-Aware Verification &amp; Clearance Platform</text>
+<text x="79" y="115" fill="#526579" font-family="Arial, sans-serif" font-size="19">SIH26265  •  Secure lifecycle management for AICTE security deposits / FDRs</text>
+<rect x="78" y="160" width="1444" height="6" rx="3" fill="#d6e2ec"/>
+<text x="78" y="200" fill="#1c628c" font-size="17" font-family="Arial, sans-serif" font-weight="700" letter-spacing="1">USERS &amp; CASE FLOW</text>
+<!-- role block -->
+<rect x="75" y="225" rx="15" width="277" height="170" fill="#fff" stroke="#c6d5e2" stroke-width="2" filter="url(#shadow)"/>
+<rect x="75" y="225" width="277" height="10" rx="5" fill="#6a8bb5"/>
+<text x="213" y="272" text-anchor="middle" fill="#173953" font-size="25" font-weight="700" font-family="Arial">Stakeholders</text>
+<text x="213" y="307" text-anchor="middle" fill="#526477" font-size="18" font-family="Arial">Institutions</text>
+<text x="213" y="335" text-anchor="middle" fill="#526477" font-size="18" font-family="Arial">AICTE Officers / Bureaus</text>
+<text x="213" y="363" text-anchor="middle" fill="#526477" font-size="18" font-family="Arial">Auditors</text>
+<!-- frontend -->
+<rect x="408" y="225" rx="15" width="267" height="170" fill="#fff" stroke="#b6d8e3" stroke-width="2" filter="url(#shadow)"/>
+<rect x="408" y="225" width="267" height="10" rx="5" fill="#1486a3"/>
+<text x="542" y="272" text-anchor="middle" fill="#173953" font-size="25" font-weight="700" font-family="Arial">Secure Portal</text>
+<text x="542" y="310" text-anchor="middle" fill="#526477" font-size="18" font-family="Arial">Role-Based Dashboard</text>
+<text x="542" y="338" text-anchor="middle" fill="#526477" font-size="18" font-family="Arial">Submission &amp; Review</text>
+<text x="542" y="366" text-anchor="middle" fill="#526477" font-size="18" font-family="Arial">Search &amp; Reports</text>
+<!-- domain -->
+<rect x="730" y="211" rx="15" width="434" height="198" fill="#fff" stroke="#a4cbb4" stroke-width="2.5" filter="url(#shadow)"/>
+<rect x="730" y="211" width="434" height="11" rx="5" fill="#2b9874"/>
+<text x="947" y="258" text-anchor="middle" fill="#173953" font-size="26" font-weight="700" font-family="Arial">Lifecycle &amp; Workflow Core</text>
+<text x="947" y="294" text-anchor="middle" fill="#476777" font-size="18" font-family="Arial">Instrument Registry • Maturity Tracking</text>
+<text x="947" y="324" text-anchor="middle" fill="#476777" font-size="18" font-family="Arial">Renewal / Replacement History</text>
+<text x="947" y="354" text-anchor="middle" fill="#476777" font-size="18" font-family="Arial">Cross-Bureau Clearance • Release</text>
+<text x="947" y="385" text-anchor="middle" fill="#2c8167" font-size="16" font-family="Arial" font-weight="700">Human-authorized decisions only</text>
+<!-- output -->
+<rect x="1220" y="225" rx="15" width="304" height="170" fill="#fff" stroke="#c6d5e2" stroke-width="2" filter="url(#shadow)"/>
+<rect x="1220" y="225" width="304" height="10" rx="5" fill="#6a8bb5"/>
+<text x="1372" y="272" text-anchor="middle" fill="#173953" font-size="23" font-weight="700" font-family="Arial">Verifiable Outcomes</text>
+<text x="1372" y="310" text-anchor="middle" fill="#526477" font-size="18" font-family="Arial">Status &amp; Risk Findings</text>
+<text x="1372" y="338" text-anchor="middle" fill="#526477" font-size="18" font-family="Arial">Alerts &amp; Case Tracking</text>
+<text x="1372" y="366" text-anchor="middle" fill="#526477" font-size="18" font-family="Arial">Authorized NOC / Sanction</text>
+<!-- arrows between -->
+<path d="M353 307 L398 307" stroke="#51617a" stroke-width="3" fill="none" marker-end="url(#arr)"/>
+<path d="M676 307 L721 307" stroke="#51617a" stroke-width="3" fill="none" marker-end="url(#arr)"/>
+<path d="M1165 307 L1210 307" stroke="#51617a" stroke-width="3" fill="none" marker-end="url(#arr)"/>
+<!-- capabilities -->
+<rect x="69" y="447" width="610" height="35" rx="5" fill="#f7f9fc"/>
+<text x="78" y="473" fill="#1c628c" font-size="17" font-family="Arial" font-weight="700" letter-spacing="1">SPECIALIZED ENGINES &amp; CONTROLLED INTEGRATIONS</text>
+<rect x="75" y="498" rx="15" width="456" height="174" fill="#e9f3fb" stroke="#c5e1f2" stroke-width="2"/>
+<text x="100" y="538" fill="#165786" font-size="23" font-weight="700" font-family="Arial">01  Document Intelligence</text>
+<text x="102" y="573" fill="#3c5971" font-size="18" font-family="Arial">PDF/OCR + typed field extraction</text>
+<text x="102" y="603" fill="#3c5971" font-size="18" font-family="Arial">Cross-document discrepancy checks</text>
+<text x="102" y="633" fill="#3c5971" font-size="18" font-family="Arial">Evidence &amp; confidence per finding</text>
+<rect x="572" y="498" rx="15" width="456" height="174" fill="#eaf5ee" stroke="#c1e3cf" stroke-width="2"/>
+<text x="598" y="538" fill="#237753" font-size="23" font-weight="700" font-family="Arial">02  Policy Compliance Engine</text>
+<text x="601" y="573" fill="#3c5971" font-size="18" font-family="Arial">Versioned AICTE rules (APH)</text>
+<text x="601" y="603" fill="#3c5971" font-size="18" font-family="Arial">Deterministic eligibility checks</text>
+<text x="601" y="633" fill="#3c5971" font-size="18" font-family="Arial">Clause-linked decision explanations</text>
+<rect x="1068" y="498" rx="15" width="456" height="174" fill="#f2effd" stroke="#d9cef6" stroke-width="2"/>
+<text x="1092" y="538" fill="#674eae" font-size="23" font-weight="700" font-family="Arial">03  Verification Connectors</text>
+<text x="1094" y="573" fill="#3c5971" font-size="18" font-family="Arial">Authorized AICTE / Bank adapters</text>
+<text x="1094" y="603" fill="#3c5971" font-size="18" font-family="Arial">Distinguish declared vs confirmed</text>
+<text x="1094" y="633" fill="#765ca4" font-size="17" font-family="Arial" font-weight="700">Demo: simulated attestations</text>
+<path d="M302 498 V434 H947 V410" fill="none" stroke="#8ba6b4" stroke-width="2.2" stroke-dasharray="6 6" marker-end="url(#arr)"/>
+<path d="M800 498 V434 H947" fill="none" stroke="#8ba6b4" stroke-width="2.2" stroke-dasharray="6 6"/>
+<path d="M1296 498 V434 H1045" fill="none" stroke="#8ba6b4" stroke-width="2.2" stroke-dasharray="6 6"/>
+<!-- persistence -->
+<path d="M800 676 V713" fill="none" stroke="#51617a" stroke-width="3" marker-end="url(#arr)"/>
+<rect x="160" y="723" rx="15" width="1280" height="94" fill="#132f49"/>
+<text x="800" y="765" text-anchor="middle" fill="#ffffff" font-size="25" font-weight="700" font-family="Arial">Trusted System of Record</text>
+<text x="800" y="795" text-anchor="middle" fill="#d7e8f2" font-size="19" font-family="Arial">PostgreSQL • Encrypted Document Storage • Append-Only Audit / Outbox • Async Alerts</text>
+<text x="78" y="864" fill="#687d90" font-size="16" font-family="Arial">Prototype uses synthetic data. External bank/AICTE integrations require formal authorization. No autonomous financial release.</text>
+</svg>
