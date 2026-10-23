@@ -109,3 +109,26 @@ host/VM time synchronization before any production qualification.
 
 Never run destructive volume resets on any environment with needed data. For local
 restarts use `docker compose stop` / `docker compose up -d`; named volumes retain records.
+
+## Operational qualification
+
+The synthetic flow includes bureau clearances, independent sign-off, protected sample
+issuance, replacement lineage, evidence adjudication, notifications and reports. See
+[operations runbook](docs/OPERATIONS_RUNBOOK.md) for recovery, scoped provisioning,
+trace export, restore/load commands and production activation requirements. The runtime
+uses restricted DB credentials and a minimal environment; operator/IdP/demo passwords
+are excluded. Local objects/history are retained; no automated deletion exists.
+
+`DECISION_MFA_REQUIRED=true` enables the recent signed-IdP-method/authentication-time
+gate for approval/issuance. This flag defaults to `false` for the synthetic demo. Actual
+production MFA enrollment/step-up and policy/legal activation remain separate work.
+
+Full browser suite: `.venv\Scripts\python scripts/local.py -m pytest -q -m browser`.
+Docker includes Tesseract and is the canonical full backend test runner. Native Windows
+OCR tests need Tesseract on PATH. Test mode disables optional AI; the connected model
+has a separate smoke test. Browser CI is configured; no remote CI run is claimed.
+
+The current base uses Debian Trixie with pip 26.2.2. For metadata signed ahead of the VM
+clock, this session used `docker compose build --build-arg DEBIAN_SNAPSHOT=20261022T000000Z api`.
+APT fails on any repository error and keeps signature/expiry checks enabled. Refresh
+snapshot dates deliberately and fix time synchronization before production qualification.

@@ -60,8 +60,11 @@ def search(q: str = Query('', max_length=100), workflow: str | None = None,
            actor: Actor = Depends(authenticate), db: Session = Depends(get_db)):
     query = select(Deposit).join(Institution).where(scoped_deposits(actor))
     if q:
-        query = query.where(or_(Institution.legal_name.ilike('%' + q + '%'), Deposit.bank_code.ilike('%' + q + '%'),
-                               Deposit.reference_last4 == q[-4:].upper(), Deposit.id.startswith(q)))
+        terms = [Institution.legal_name.icontains(q, autoescape=True),
+                 Deposit.bank_code.icontains(q, autoescape=True), Deposit.id.startswith(q, autoescape=True)]
+        if len(q) == 4:
+            terms.append(Deposit.reference_last4 == q.upper())
+        query = query.where(or_(*terms))
     if workflow:
         if workflow not in ('DRAFT', 'PENDING_SCRUTINY', 'ACCEPTED'):
             raise HTTPException(422, 'Invalid workflow filter')

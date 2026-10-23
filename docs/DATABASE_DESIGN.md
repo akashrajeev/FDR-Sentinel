@@ -44,16 +44,24 @@ deletes only unreferenced objects after a grace period. Never expose keys to cal
 Worker reads immutable bytes, verifies SHA, scans and extracts before setting READY.
 Scan/error status and audit are persisted in the same worker transaction.
 
-Application role has no schema ownership in production. Local owner migrations are
-convenient but not a substitute for production grants. Audit database owner attacks
-require external immutable anchoring and separation of duties in Phase 4.
+The local application uses a restricted runtime role without schema ownership,
+deletion or history-update privileges. Owner credentials are confined to provisioning/
+test containers, not API/worker/Beat. Audit database-owner attacks still require external
+immutable anchoring and production separation of duties.
 
-## Later schema (do not create empty tables prematurely)
+## Implemented extensions and deferred schema
 
-Phase 2: extracted_fields, corrections, discrepancies, verification_requests/attestations.
-Phase 3: obligations, policy_versions/rules activation registry, instrument_relationships,
-release_cases, clearance_requirements/decisions, holds, notifications and lifecycle_events.
-Phase 4: audit checkpoints, retention/holds and restoration metadata.
+Phase 1B added release_cases, clearance_decisions, holds, instrument_relationships
+and notifications. Required bureau sets live in the immutable case snapshot, with
+revision-keyed append-only decisions. Phase 2 added extraction_corrections,
+discrepancies and verification_attestations. Raw typed extraction stays in documents
+JSON with page/offset/bounds/hash provenance. Phase 3 uses repository policy manifests
+and frozen evaluations instead of redundant empty activation/event tables. Phase 4A
+adds outbox trace_context and isolated restore manifests; schema head is
+`339cf1735fc9`. There are 19 domain tables plus alembic_version.
+
+External audit checkpoints and sponsor-defined retention/deletion remain deferred;
+no deletion operation exists and legal/financial holds continue to block issuance.
 Full bank references require envelope encryption and managed key rotation before storage.
 
 Backups: encrypted snapshots + WAL/PITR in production; test restore into separate database,

@@ -1,5 +1,10 @@
 # Implementation status
 
+Current scope: complete synthetic local workflows through Phase 3, with Phase 4A local
+operational qualification below. Phase 4B production activation remains blocked. The
+architecture/review are design inputs; this register is the actual evidence record.
+Live local portal: http://localhost:8088. No real bank/AICTE or settlement connection.
+
 ## Phase 0
 
 Completed architecture review and eight requested design documents. Reviewed both source
@@ -135,3 +140,72 @@ Limits: programme tables do not settle historical eras, existing-deposit credits
 multi-programme aggregates, authentic bank data or current amendments. Such contexts
 remain human-review paths, and all legal activation is blocked. No production regulatory
 coverage is claimed. Phase 4 operational qualification is next.
+
+## Phase 4A — completed local operational qualification
+
+Implemented restricted PostgreSQL runtime grants, separate owner provisioning, guarded
+onboarding scope inserts, explicit application-only runtime environment, read-only
+container filesystem/temporary scratch/capability restrictions; payload-free OTel spans
+with transactional outbox/Celery context and optional OTLP; safe generic HTTP errors;
+configurable recent verified-MFA gate for approval/issuance with explicit demo exemption;
+stable browser mutation retry keys; real lost-response browser regression; signed JWT
+wrong-audience/expiry tests; strict input/privilege tests; actual outage, snapshot restore
+and load scripts; operational/activation runbook and dependency review.
+
+Keycloak 26.8.1 runs against a copied volume with the original/archive retained. The API
+base is Debian Trixie/Tesseract 5.5.0. A recent signed snapshot build was needed because
+upstream repository signatures were ahead of VM time. APT now fails on any repository
+update error rather than accepting a partial update; signatures/expiry remain enabled.
+Unused Pillow was removed; the final runtime excludes pip/ensurepip after installation.
+Application-only Python/npm audits report no known findings, while unresolved scanned
+OS/JDK advisories remain explicit production blockers in DEPENDENCY_REVIEW.md.
+
+Executed evidence:
+
+* `docker compose --profile test run --rm test`: **67 passed**, five browser tests
+  deselected, **48.51s**, actual PostgreSQL/OIDC/private S3/scanner/Tesseract on the
+  final image with the package installer removed. Earlier pre-removal run: 45.96s.
+* `.venv\Scripts\python scripts/local.py -m pytest -q -m browser`: **5 passed**,
+  67 deselected, **109.74s**, final runtime image and upgraded OIDC/Tesseract stack
+  (earlier pre-installer-removal run: 143.63s). Includes actual PKCE,
+  worker processing, officer review, pending-PGRC denial, independent synthetic issuance,
+  scan annotations/corrections, simulated mismatch, scoped CSV and lost-commit-response
+  retry for both JSON and multipart with identical returned IDs. Screenshots inspected.
+* `npm run contracts --prefix apps/web` regenerates formatted types; TypeScript/Vite
+  build and Ruff passed. Git diff confirms no schema/contract drift. Browser CI added;
+  no hosted CI run has been executed.
+* `scripts/load_check.py`: **200 requests**, concurrency 8, **0 HTTP errors**, p95
+  **966.17ms** after seeding 1,000 synthetic institutions/deposits. Exact command,
+  native-run/base-image timing and scope limitations are in MEASUREMENTS.md.
+* Tesseract 5.5.0 recheck: **16/16** fields on four small synthetic fixtures; no claim
+  of real-bank, handwriting or representative OCR accuracy.
+* `.venv\Scripts\python scripts/local.py scripts/outage_drill.py`: actual Redis
+  **11.16s** and ClamAV **109.09s** stop/recover checks passed. Both retained exactly
+  one draft document, denied unsafe read and correlated the API upload trace with the
+  real Celery worker. No approval occurred during outage or recovery.
+* `.venv\Scripts\python scripts/local.py scripts/restore_drill.py`: isolated consistent
+  restore verified **20 tables, 625 rows, 249 audit rows and 85 original/preview hashes**,
+  **8.42s**. Restored database `sentinel_restore_d992791013` and private bucket
+  `sentinel-restore-d992791013`; source retained. Ignored dump manifest includes SHA-256.
+  This is local logical restoration, not production PITR/RPO/RTO or encrypted offsite proof.
+* Runtime environment inspection confirmed no owner/admin/provisioning/demo passwords.
+  Restricted-role SQL test rejects DDL, audit updates/deletes and officer scope grants.
+  Query-text exclusion and outbox parent-context tests pass. Optional OTLP collector
+  delivery and a real successful MFA ceremony are not claimed.
+
+Fixed during qualification: long ID search accidentally also matched reference suffix;
+now suffix matching only applies to four-character queries and wildcards are literal.
+Native FastAPI tracing captured queries by default; disabled it in favor of explicit
+safe spans. An MFA test initially used the wrong acknowledgement field; corrected.
+One browser run overlapped deployment and got connection refusals; the readiness-complete
+rerun passed. A native full backend attempt was stopped after inheriting enabled demo
+AI; `--test` now disables it. Native OCR additionally needs Tesseract on PATH, so Docker
+is the canonical full backend runner. Scanner cache-lock/download timeout attempts were
+retried sequentially; failed attempts are not counted as vulnerability clearance.
+
+Remaining production work (Phase 4B): current official amendment/effective-date/source
+review, sponsor policy/signatory authority, authorized real connectors, production IdP
+MFA/recovery and institutional proof, managed encryption/key rotation, retention/deletion,
+independent immutable audit/PITR/recovery objectives, full deployment vulnerability triage
+and independent security assessment. No actual release, settlement or legal certification
+exists. Next milestone is sponsor-backed production qualification under the runbook gates.

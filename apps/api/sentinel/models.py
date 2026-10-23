@@ -173,6 +173,7 @@ class Outbox(Base):
     __tablename__ = 'outbox_events'
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
     aggregate_id: Mapped[str] = mapped_column(ForeignKey('documents.id'))
+    trace_context: Mapped[dict] = mapped_column(JSON, default=dict, server_default='{}')
     attempts: Mapped[int] = mapped_column(Integer, default=0)
     processing_attempts: Mapped[int] = mapped_column(Integer, default=0)
     dead_lettered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

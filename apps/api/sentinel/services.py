@@ -25,6 +25,7 @@ from sentinel.models import (
 )
 from sentinel.schemas import DepositOut, DocumentOut, EvaluationOut, InstitutionOut, ObligationOut
 from sentinel.storage import put_original
+from sentinel.telemetry import capture_context
 from sentinel.transactions import audit
 
 
@@ -149,7 +150,7 @@ def upload(db, actor, deposit_id, data, category, request_id, supersedes_id=None
         previous.active = False
     db.add(document)
     db.flush()
-    db.add(Outbox(aggregate_id=document.id))
+    db.add(Outbox(aggregate_id=document.id, trace_context=capture_context()))
     deposit.input_revision += 1
     deposit.version += 1
     audit(db, deposit.institution_id, actor.subject, 'DOCUMENT_QUARANTINED', deposit.id,

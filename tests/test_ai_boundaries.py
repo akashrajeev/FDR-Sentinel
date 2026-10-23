@@ -1,5 +1,13 @@
+from types import SimpleNamespace
+
 import httpx
 import pytest
+
+
+@pytest.fixture(autouse=True)
+def isolated_ai_settings(monkeypatch):
+    monkeypatch.setattr('sentinel.local_ai.settings', lambda: SimpleNamespace(
+        ai_base_url='http://localhost:11434', ai_model='unit-test-model'))
 
 
 def response_for(content):

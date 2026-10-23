@@ -3,6 +3,7 @@ import logging
 from datetime import timedelta
 
 from celery import Celery
+from celery.signals import worker_process_init
 from redis import Redis
 from sqlalchemy import or_, select
 from sqlalchemy.engine import make_url
@@ -12,6 +13,7 @@ from sentinel.db import session_factory
 from sentinel.extraction import extract_document, render_previews
 from sentinel.models import Deposit, Document, Outbox, ReleaseCase, now
 from sentinel.storage import put_blob, read_original, scan_bytes
+from sentinel.telemetry import configure, traced
 from sentinel.transactions import audit
 
 celery = Celery('sentinel', broker=settings().redis_url)
@@ -27,6 +29,11 @@ celery.conf.update(
 logger = logging.getLogger(__name__)
 
 
+@worker_process_init.connect
+def initialize_worker_telemetry(**kwargs):
+    configure('sentinel-worker')
+
+
 @celery.task(name='sentinel.maturity')
 def scheduled_maturity():
     from sentinel.lifecycle import run_maturity, today
@@ -37,6 +44,7 @@ def scheduled_maturity():
 
 
 @celery.task(name='sentinel.publish_outbox')
+@traced('outbox.publish')
 def publish_outbox():
     Redis.from_url(settings().redis_url, socket_connect_timeout=2, socket_timeout=2).set(
         'sentinel:heartbeat:' + make_url(settings().database_url).database, now().isoformat(), ex=30)
@@ -47,7 +55,7 @@ def publish_outbox():
                                              Outbox.published_at < now() - timedelta(minutes=5)),
         ).order_by(Outbox.created_at).with_for_update(skip_locked=True).limit(20)).all()
         for event in events:
-            process_document.apply_async(args=[event.id], task_id=event.id, retry=False)
+            process_document.apply_async(args=[event.id], task_id=event.id, headers=event.trace_context, retry=False)
             event.published_at = now()
             event.attempts += 1
         db.commit()
@@ -55,6 +63,7 @@ def publish_outbox():
 
 
 @celery.task(name='sentinel.process_document', bind=True, max_retries=5)
+@traced('document.process')
 def process_document(self, event_id):
     with session_factory()() as db:
         event = db.get(Outbox, event_id)

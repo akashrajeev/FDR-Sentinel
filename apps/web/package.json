@@ -7,7 +7,7 @@
     "dev": "vite --host 0.0.0.0",
     "build": "tsc -b && vite build",
     "typecheck": "tsc -b",
-    "contracts": "openapi-typescript ../../openapi/openapi.json -o src/contracts.d.ts"
+    "contracts": "openapi-typescript ../../openapi/openapi.json -o src/contracts.d.ts && prettier --write src/contracts.d.ts"
   },
   "dependencies": {
     "oidc-client-ts": "^3.2.1",

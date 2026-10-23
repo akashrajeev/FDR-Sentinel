@@ -50,6 +50,10 @@ with session_factory()() as db:
     # scope without inventing a global institution or financial authority.
     ids = [institution_id] if institution_id else list(db.scalars(select(RoleBinding.scope_id).where(
         RoleBinding.subject == args.subject, RoleBinding.scope_type == 'INSTITUTION')))
+    if not institution_id:
+        ids += list(db.scalars(select(ReleaseCase.institution_id).join(
+            RoleBinding, RoleBinding.scope_id == ReleaseCase.id).where(
+                RoleBinding.subject == args.subject, RoleBinding.scope_type == 'CASE')))
     if not ids:
         parser.error('Assign an institution/case access scope before assigning a bureau role')
     for tenant_id in set(ids):

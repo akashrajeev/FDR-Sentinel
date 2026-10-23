@@ -1,7 +1,7 @@
 # Test strategy
 
 Tests must report actual commands, counts and dependency versions in STATUS.md. A mock
-unit test is never evidence that MinIO, Keycloak, Redis or PostgreSQL actually connected.
+unit test is never evidence that object storage, Keycloak, Redis or PostgreSQL actually connected.
 
 ## Phase 1 gates
 
@@ -15,7 +15,7 @@ unit test is never evidence that MinIO, Keycloak, Redis or PostgreSQL actually c
   institution cannot review, auditor cannot mutate, same-subject maker/checker denied.
 * Idempotency/concurrency: exact replay one row/event, changed payload 409, two workers
   same event one processing result, stale version 409, decision/audit rollback together.
-* Documents: real private MinIO write/read, invalid MIME/magic/oversize/too-many pages,
+* Documents: real private S3-compatible write/read, invalid MIME/magic/oversize/too-many pages,
   scanner EICAR detection test, unavailable scanner never READY, document hash tamper,
   retries after failure, digital-PDF page/bounds evidence, no text -> human review.
 * Frontend: generated OpenAPI types, `tsc`, production Vite build, browser login with
@@ -38,7 +38,16 @@ Phase 4: D1-D10 end-to-end, threat-focused abuse, measured load and queue backlo
 restore drill, signature/key rotation, retention/legal holds and external audit anchoring.
 
 CI uses Linux Docker dependencies, migrations and Python integration tests plus frontend
-typecheck/build. Do not broaden tests for low-impact prose changes; rerun gates after
+typecheck/build and real browser workflows (workflow configured; remote CI not yet run).
+The transport-failure browser test intercepts only to drop the response after a real
+API commit, then verifies real replay identity; it never fabricates a server response.
+Recent-MFA unit tests cover missing/stale/future/present method claims, and actual
+OIDC endpoint tests deny mutation with the gate enabled. No successful MFA ceremony
+is claimed. Runtime SQL denies DDL, history rewrites and officer scope grants.
+Trace tests assert query exclusion and eager outbox parent context; the outage drill
+separately checks actual broker-to-worker trace correlation. Load fixtures and tests
+must run sequentially against the preserved dedicated test DB.
+Do not broaden tests for low-impact prose changes; rerun gates after
 relevant code/configuration changes. Failed infrastructure checks are recorded honestly.
 
 

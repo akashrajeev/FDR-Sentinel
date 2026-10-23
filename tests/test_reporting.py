@@ -15,6 +15,7 @@ def test_summary_search_export_scope(clients):
     found = maker.get('/api/v1/search/deposits', params={'q': record['id'][:12]}).json()
     assert [r['id'] for r in found] == [record['id']]
     assert other.get('/api/v1/search/deposits', params={'q': record['id']}).json() == []
+    assert maker.get('/api/v1/search/deposits', params={'q': '%_'}).json() == []
     csv = maker.get('/api/v1/reports/deposits.csv')
     assert csv.status_code == 200 and record['id'] in csv.text
     assert 'reference_digest' not in csv.text

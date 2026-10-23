@@ -16,21 +16,21 @@ OFFICER: assigned-institution read/evaluate and accept/return submissions; canno
 institution/FDR or upload as maker. AUDITOR: assigned-institution read only.
 Maker and checker subjects must differ even if assignments change later. No global
 admin token gives financial decision authority. Bank integration and workers have no
-interactive decision endpoint credential. Release roles/bureaus are Phase 3.
+interactive decision endpoint credential. Release scopes and bureau separation are implemented.
 
 ## Threats and controls
 
 | Threat | Control / residual risk |
 |---|---|
 | IDOR and tenant leakage | Parent-scope lookup on every API and object download; 404 for invisible IDs; composite tenant FK; negative tests |
-| Forged/stale JWT | JWKS signature + issuer/audience/expiry, no algorithm fallback; explicit local subject grants; later MFA assurance for financial roles |
+| Forged/stale JWT | JWKS signature + issuer/audience/expiry; explicit local subject grants; configurable recent verified MFA gate for approval/issuance; actual production IdP assurance remains unqualified |
 | Duplicate/replayed financial action | Durable principal/operation idempotency, payload hashes, aggregate lock/version checks, database constraints |
 | Malicious document | Only bounded PDF multipart, magic/parse/page checks, private quarantine, ClamAV before extraction, worker limits; scanner outage stays unavailable |
 | XSS/token theft | React escaping, CSP, no HTML rendering of extraction, memory token; dependencies pinned; no remote document content execution |
 | CSRF | Bearer header auth without application auth cookies; strict same-origin proxy/CORS; IdP state+PKCE handled by OIDC library |
 | SSRF/exfiltration | No user document URL fetch; object keys server generated; JWKS/storage URLs operator configured; future AI needs explicit data policy |
-| Prompt injection | No model in first slice; future extraction is data-only typed output, never tools/approval authority |
-| False verification | MANUALLY_REVIEWED label; no BANK_CONFIRMED from manual/worker path; future mocks SIMULATED and denied in production |
+| Prompt injection | Optional local model has bounded schema-only output, independent source anchoring, no tools or approval credentials |
+| False verification | MANUALLY_REVIEWED label; no BANK_CONFIRMED from manual/worker path; adapters visibly SIMULATED or NOT_CONNECTED |
 | Audit tampering | Append-only API + trigger; audit within same mutation transaction; DB owner remains privileged; external checkpoint Phase 4 |
 | Secret leakage | Generated ignored .env, no fixture passwords in source, private network dependencies, no auth/document data in logs |
 | Policy error | Cited source/hash, narrow applicability, frozen inputs, unknown REVIEW; provisional fixture cannot authorize regulatory release |
@@ -47,7 +47,7 @@ Private previews are rendered in the scanned-document worker, hash checked on ac
 and scoped through the API. No unscanned PDF parsing occurs in the web request path.
 Failed processing stays quarantined, including after the fifth/dead-letter attempt.
 
-MinIO private bucket without anonymous policy; random keys never returned. Authenticated
+Private S3-compatible SeaweedFS bucket without anonymous policy; random keys never returned. Authenticated
 downloads use attachment + nosniff, only READY files. Originals immutable by application
 behavior; production versioning/object-lock and encryption require deployment review.
 TLS terminates at production ingress; local localhost HTTP is explicitly development
@@ -60,6 +60,17 @@ Rate limits at ingress and authentication endpoint are required for production; 
 OIDC brute-force protection is configured. No regulatory production claims before
 penetration testing, backup restoration, key rotation, retention policy and incident drill.
 Retention terms/data locality require sponsor/legal approval; do not invent a legal period.
+
+Runtime containers receive an explicit minimal environment rather than all `.env`
+values. Database-owner, Keycloak-admin, runtime-provisioning and demo-user passwords
+are excluded from API/worker/Beat. Containers run as uid 10001 with read-only root,
+bounded /tmp, dropped capabilities and no-new-privileges. PostgreSQL runtime grants
+deny DDL, deletion and history rewrites; owner/operator compromise remains outside
+that boundary. OTLP export is optional; default payload-free JSON spans propagate
+via transactional outbox to worker, with no baggage or URL query capture.
+
+See OPERATIONS_RUNBOOK.md for the optional verified-MFA gate, synthetic exemption,
+retained evidence, isolated restoration and explicit production activation blockers.
 
 
 ## Adopted independent review amendments

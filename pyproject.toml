@@ -11,7 +11,8 @@ dependencies = [
   "psycopg[binary]>=3.2,<4", "alembic>=1.15,<2", "pydantic-settings>=2.8,<3",
   "PyJWT[crypto]>=2.10,<3", "httpx>=0.28,<1", "python-multipart>=0.0.20,<1",
   "minio>=7.2,<8", "celery[redis]>=5.5,<6", "pymupdf>=1.25,<2",
-  "prometheus-client>=0.21,<1", "Pillow>=11,<13",
+  "prometheus-client>=0.21,<1", "opentelemetry-sdk>=1.45,<2",
+  "opentelemetry-exporter-otlp-proto-http>=1.45,<2",
 ]
 
 [project.optional-dependencies]

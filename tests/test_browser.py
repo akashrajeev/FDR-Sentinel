@@ -190,3 +190,49 @@ def test_browser_scoped_reports_and_csv_download():
         assert 'SYNTHETIC' in content and 'reference_digest' not in content
         page.screenshot(path='.local/browser/reports.png', full_page=True)
         browser.close()
+
+
+def test_browser_retries_lost_commit_response_without_duplicate_intake():
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch(channel=os.getenv('BROWSER_CHANNEL', 'chromium'))
+        page = browser.new_context(viewport={'width': 1440, 'height': 1000}).new_page()
+        login(page, 'institution')
+        keys, committed = {}, {}
+
+        def lose_first_response(route):
+            request = route.request
+            if request.method != 'POST':
+                route.continue_()
+                return
+            path = request.url.split('/api/v1')[-1]
+            keys.setdefault(path, []).append(request.headers['idempotency-key'])
+            response = route.fetch()  # Real API commits before the client sees a network loss.
+            assert response.status == 200
+            result = response.json()
+            if path not in committed:
+                committed[path] = result['id']
+                route.abort('connectionreset')
+            else:
+                assert result['id'] == committed[path]
+                route.fulfill(response=response)
+
+        page.route('**/api/v1/deposits', lose_first_response)
+        page.route('**/api/v1/deposits/*/documents', lose_first_response)
+        page.get_by_role('button', name='+ Register deposit').click()
+        page.get_by_label('Full reference').fill('SYN-RETRY-' + uuid4().hex)
+        page.get_by_label('Declared amount (INR)').fill('3500000')
+        page.get_by_label('Issue date', exact=True).fill('2016-10-01')
+        page.get_by_label('Maturity date', exact=True).fill('2026-10-01')
+        page.get_by_role('button', name='Save deposit').click()
+        expect(page.get_by_role('button', name='Save deposit')).not_to_be_visible(timeout=20000)
+        record_id = committed['/deposits']
+        page.get_by_text(record_id[:8].upper(), exact=False).first.click()
+        page.get_by_label('PDF file').set_input_files({
+            'name': 'retry.pdf', 'mimeType': 'application/pdf', 'buffer': pdf_bytes()})
+        page.get_by_role('button', name='Upload privately').click()
+        expect(page.get_by_text('READY', exact=True)).to_be_visible(timeout=60000)
+        assert len(keys) == 2
+        assert all(len(attempts) == 2 and len(set(attempts)) == 1 for attempts in keys.values())
+        assert len(page.get_by_text('READY', exact=True).all()) == 1
+        page.screenshot(path='.local/browser/retried-intake.png', full_page=True)
+        browser.close()

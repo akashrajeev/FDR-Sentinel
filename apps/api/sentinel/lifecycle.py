@@ -9,6 +9,7 @@ from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 
+from sentinel.auth import require_decision_assurance
 from sentinel.compliance import POLICY, POLICY_REVISION, document_set_hash
 from sentinel.config import settings
 from sentinel.models import (
@@ -26,6 +27,7 @@ from sentinel.models import (
 from sentinel.schemas import DocumentOut
 from sentinel.services import check_version, current_evaluation, documents_for, dto, get_deposit
 from sentinel.storage import put_original
+from sentinel.telemetry import capture_context
 from sentinel.transactions import audit
 
 RELEASE_CATEGORIES = {'REQUEST_LETTER', 'AFFIDAVIT_6', 'APPROVAL_LETTER'}
@@ -146,7 +148,7 @@ def upload_case_document(db, actor, case_id, data, category, request_id):
                         sha256=hashlib.sha256(data).hexdigest(), size=len(data), uploader=actor.subject)
     db.add(document)
     db.flush()
-    db.add(Outbox(aggregate_id=document.id))
+    db.add(Outbox(aggregate_id=document.id, trace_context=capture_context()))
     case.version += 1
     case.input_revision += 1
     audit(db, case.institution_id, actor.subject, 'RELEASE_EVIDENCE_QUARANTINED', case.id,
@@ -306,6 +308,7 @@ def gate_approval(db, case):
 
 def approve_case(db, actor, case_id, body, request_id):
     case = get_case(db, actor, case_id, lock=True, roles=['APPROVER'])
+    require_decision_assurance(actor)
     case_version(case, body.expected_version)
     gate_approval(db, case)
     if case.state != 'APPROVAL_REVIEW':
@@ -326,6 +329,7 @@ def approve_case(db, actor, case_id, body, request_id):
 
 def issue_case(db, actor, case_id, body, request_id):
     case = get_case(db, actor, case_id, lock=True, roles=['ISSUER'])
+    require_decision_assurance(actor)
     case_version(case, body.expected_version, ['APPROVED_SYNTHETIC'])
     gate_approval(db, case)
     deposit = db.get(Deposit, case.deposit_id)

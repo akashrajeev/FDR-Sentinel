@@ -47,11 +47,12 @@ This plan describes work; STATUS.md is the implementation evidence register.
 | 1 Registration review slice | Phase 0 | FastAPI, PostgreSQL migration, OIDC/PKCE React portal, onboarding, immutable private PDF upload, Redis/Celery scan/extraction, versioned evaluation, officer decision, audit/outbox/idempotency, Compose/CI | Real PostgreSQL tests; tenant isolation; JWT denial; scan fail-closed; replay/stale transitions; browser journey institution to officer; actual results recorded; Git checkpoint |
 | 2 Document intelligence | Phase 1 | OCR for image-only PDF, typed extraction/corrections with page/bounds, discrepancy resolution, SIMULATED bank adapter, authorized connector ports | D1/D2/D9 positive and adversarial fixtures; extraction precision/recall on labeled corpus; retry/failure evidence |
 | 3 Lifecycle and release | Phases 1-2 | Clock-based reminders, linked replacements, obligations by historical era, release case state machine, scoped bureau clearances, holds, independent final approval, synthetic issuance | D4-D7; PGRC cannot act as Vigilance; no pending/held case can issue; RTGS/FDR branches; notifications dedupe |
-| 4 Operational qualification | Phases 1-3 | MFA assurance enforcement for release, telemetry export, load/security checks, backup/restore drill, retention/legal holds, deployment gates | D8/D10, all D1-D10 browser/API, restore evidence, measured load baseline, current policy-owner approval |
+| 4A Local operational qualification | Phases 1-3 | Restricted DB/environment/container runtime, optional verified-MFA gate, trace propagation/export, security/dependency checks, outage/load/restore scripts and runbook | Passing actual-service suite/browser workflows; correlated broker trace; measured read load and isolated restore; recorded advisory limitations; Git checkpoint |
+| 4B Production activation (blocked) | 4A plus sponsor/authorized owners | Approved policy source/amendments, actual IdP/MFA, managed encryption/keys, authorized external contracts, retention/deletion and external immutable audit/PITR, independent security assessment | Written scope/authority, qualified MFA/recovery/retention/restore/operational objectives and all current security findings reviewed; separate reviewed implementation before removing startup gate |
 
 ## Phase 1 task order
 
-1. Lock Python/Node dependencies; configure Compose/PostgreSQL/Redis/Keycloak/MinIO/ClamAV.
+1. Lock Python/Node dependencies; configure Compose/PostgreSQL/Redis/Keycloak/private S3/ClamAV (SeaweedFS adopted in ADR-021).
 2. Alembic schema with constraints, scoped identity, audit trigger, idempotency records.
 3. OIDC JWT verification and server-owned role/scope lookup; provisioning/seed tooling.
 4. Onboarding and FDR services; integer paise, date constraints, unique reference digest.

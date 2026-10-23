@@ -1,6 +1,7 @@
 import os
 import subprocess
 import sys
+import time
 from uuid import uuid4
 
 import httpx
@@ -16,6 +17,19 @@ def services_ready():
     if os.getenv('TEST_SERVICES') != '1':
         pytest.skip('Integration services require scripts/local.py --test or Compose test service')
     from sentinel.config import settings
+    from sentinel.storage import scanner_ping
+    deadline = time.monotonic() + 300
+    while True:
+        try:
+            base = os.environ['TEST_OIDC_URL'].split('/realms/')[0]
+            discovery = httpx.get(base + '/realms/sentinel/.well-known/openid-configuration', timeout=3)
+            if discovery.status_code == 200 and scanner_ping():
+                break
+        except Exception:
+            pass
+        if time.monotonic() >= deadline:
+            pytest.fail('Real Keycloak/ClamAV did not become ready within 300 seconds')
+        time.sleep(2)
     url = make_url(settings().database_url)
     if url.database != 'sentinel_test':
         pytest.fail('Refusing test database other than dedicated sentinel_test')
@@ -26,6 +40,7 @@ def services_ready():
             connection.execute(text('CREATE DATABASE sentinel_test'))
     owner_engine.dispose()
     subprocess.run([sys.executable, '-m', 'alembic', 'upgrade', 'head'], check=True)
+    subprocess.run([sys.executable, 'scripts/provision_runtime.py'], check=True)
     from sentinel.db import session_factory
     from sentinel.storage import storage
 

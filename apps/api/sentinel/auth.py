@@ -25,6 +25,8 @@ def jwks_client():
 class Actor:
     subject: str
     bindings: tuple
+    amr: tuple[str, ...] = ()
+    auth_time: int = 0
 
     def allows(self, role: str, scope_type: str, scope_id: str) -> bool:
         return any(b.role == role and b.scope_type == scope_type and b.scope_id == scope_id
@@ -69,7 +71,20 @@ def authenticate(credentials: HTTPAuthorizationCredentials | None = Depends(bear
         RoleBinding.valid_from <= instant,
         or_(RoleBinding.valid_until.is_(None), RoleBinding.valid_until > instant),
     )).all()
-    return Actor(subject, tuple(bindings))
+    methods = claims.get('amr', [])
+    methods = tuple(methods) if isinstance(methods, list) and all(isinstance(m, str) for m in methods) else ()
+    authenticated_at = claims.get('auth_time', 0)
+    return Actor(subject, tuple(bindings), methods,
+                 authenticated_at if type(authenticated_at) is int else 0)
+
+
+def require_decision_assurance(actor):
+    config = settings()
+    if not config.decision_mfa_required:
+        return  # Explicit synthetic-development exemption, never a production assurance claim.
+    age = datetime.now(timezone.utc).timestamp() - actor.auth_time
+    if not set(actor.amr).intersection({'otp', 'webauthn', 'hwk'}) or not 0 <= age <= config.decision_auth_max_age_seconds:
+        raise HTTPException(403, 'Recent IdP-verified MFA required for approval/issuance; authenticate again')
 
 
 def require_scope(actor: Actor, institution_id: str, roles=None):

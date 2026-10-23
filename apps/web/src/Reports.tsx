@@ -25,7 +25,10 @@ export function Reports() {
       .then(setSummary)
       .catch((e) => setError(e.message));
     api<Schemas["DepositOut"][]>("/search/deposits")
-      .then(setRecords)
+      .then((result) => {
+        setRecords(result);
+        setCursor(result.length === 50 ? result[result.length - 1].id : "");
+      })
       .catch((e) => setError(e.message));
   }, []);
   return (

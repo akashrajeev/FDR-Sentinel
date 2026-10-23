@@ -1,5 +1,40 @@
 # Architecture decisions
 
+ADR-031: local runtime is a separate PostgreSQL role, read-only application filesystem,
+temporary bounded scratch space and explicit application-only environment. Migration
+owner, IdP admin and demo-user passwords are not inherited by runtime containers.
+No DDL, delete, privileged role assignment or history rewrite grants exist at runtime.
+
+ADR-032: trace context is persisted with transactional outbox and forwarded in Celery
+headers. Explicit payload-free OTel spans export JSON locally and optionally OTLP.
+Native FastAPI automatic tracing is disabled because it records URL query values.
+No baggage/SQL/document/token capture is enabled. Remote OTLP remains unexercised.
+Reference: https://opentelemetry.io/docs/languages/python/instrumentation/ .
+
+ADR-033: synthetic local approval/issuance can optionally require recent signed IdP
+MFA claims. This application gate cannot establish that an IdP really performed MFA;
+production enrollment, step-up, mapping and recovery need separate qualification.
+The demo exemption is explicit; all production startup remains gated.
+
+ADR-034: distinguish completed local engineering qualification (4A) from production
+activation (4B). Sponsor-owned regulatory facts, real connectors, retention/legal
+authority, independent assessment and managed infrastructure cannot be fabricated.
+Restore targets and load fixtures are isolated; no automatic evidence deletion exists.
+
+ADR-035: browser mutation retry preserves the same key across transport failures and
+unknown 5xx outcomes, with a memory-only operation/body fingerprint. A real-API browser
+test drops a response after commit and requires the replay to return the same identity
+for both JSON deposit intake and multipart document upload. Long search queries no
+longer implicitly match the last four characters of unrelated references; wildcards
+are literal.
+
+ADR-036: update Keycloak to 26.8.1 using a copied development volume with preserved
+original/archive for rollback. Use current Python Debian Trixie base and current pinned
+pip. APT must fail on any repository-update error; no signature/expiry bypass is
+permitted. Optional recent Debian snapshot build argument handles repository/VM clock
+skew while preserving verification; snapshots need deliberate security refresh.
+References: https://www.keycloak.org/downloads and https://snapshot.debian.org/ .
+
 ADR-027: programme/level amounts are in a new immutable-version policy fixture; unknown
 history and aggregate coverage require review. Single-record amount checks do not assert
 that multiple records fulfill an obligation. Legal dates/amendments remain unapproved.

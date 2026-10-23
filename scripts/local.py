@@ -14,12 +14,13 @@ database = 'sentinel'
 if arguments and arguments[0] == '--test':
     database = 'sentinel_test'
     arguments = arguments[1:]
+    environment['AI_ASSIST_ENABLED'] = 'false'
 environment.update({
-    'DATABASE_URL': f"postgresql+psycopg://sentinel:{environment['POSTGRES_PASSWORD']}@localhost:55432/{database}",
-    'REDIS_URL': 'redis://localhost:56379/0', 'S3_ENDPOINT': 'localhost:59000',
-    'OIDC_JWKS_URL': 'http://localhost:8081/realms/sentinel/protocol/openid-connect/certs',
-    'CLAMAV_HOST': 'localhost', 'CLAMAV_PORT': '53310', 'TEST_SERVICES': '1',
-    'TEST_OIDC_URL': 'http://localhost:8081/realms/sentinel/protocol/openid-connect/token',
-    'BROWSER_CHANNEL': os.getenv('BROWSER_CHANNEL', 'chrome'),
+    'DATABASE_URL': f"postgresql+psycopg://sentinel:{environment['POSTGRES_PASSWORD']}@127.0.0.1:55432/{database}",
+    'REDIS_URL': 'redis://127.0.0.1:56379/0', 'S3_ENDPOINT': '127.0.0.1:59000',
+    'OIDC_JWKS_URL': 'http://127.0.0.1:8081/realms/sentinel/protocol/openid-connect/certs',
+    'CLAMAV_HOST': '127.0.0.1', 'CLAMAV_PORT': '53310', 'TEST_SERVICES': '1',
+    'TEST_OIDC_URL': 'http://127.0.0.1:8081/realms/sentinel/protocol/openid-connect/token',
+    'BROWSER_CHANNEL': os.getenv('BROWSER_CHANNEL', 'chrome' if os.name == 'nt' else 'chromium'),
 })
 raise SystemExit(subprocess.call([sys.executable, *arguments], env=environment, cwd=root))

@@ -1,13 +1,25 @@
 x-app: &app
   build: .
   image: fdr-sentinel-api:local
-  env_file: .env
   environment: &app-env
-    DATABASE_URL: postgresql+psycopg://sentinel:${POSTGRES_PASSWORD}@postgres:5432/sentinel
+    DATABASE_URL: postgresql+psycopg://sentinel_runtime:${RUNTIME_DB_PASSWORD}@postgres:5432/sentinel
     REDIS_URL: redis://redis:6379/0
     S3_ENDPOINT: objectstore:8333
     OIDC_JWKS_URL: http://keycloak:8080/realms/sentinel/protocol/openid-connect/certs
     CLAMAV_HOST: clamav
+    S3_ACCESS_KEY: ${S3_ACCESS_KEY}
+    S3_SECRET_KEY: ${S3_SECRET_KEY}
+    REFERENCE_HMAC_KEY: ${REFERENCE_HMAC_KEY}
+    MOCK_ATTESTATION_KEY: ${MOCK_ATTESTATION_KEY}
+    AI_ASSIST_ENABLED: ${AI_ASSIST_ENABLED:-false}
+    AI_BASE_URL: ${AI_BASE_URL:-http://host.docker.internal:11434}
+    AI_MODEL: ${AI_MODEL:-qwen2.5:0.5b}
+    DECISION_MFA_REQUIRED: ${DECISION_MFA_REQUIRED:-false}
+    OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
+  read_only: true
+  tmpfs: [/tmp:size=256m]
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
   depends_on:
     postgres: {condition: service_healthy}
     redis: {condition: service_healthy}
@@ -47,14 +59,11 @@ services:
     build: .
     image: fdr-sentinel-api:local
     depends_on: [objectstore]
-    env_file: .env
     environment:
-      DATABASE_URL: postgresql+psycopg://sentinel:${POSTGRES_PASSWORD}@postgres:5432/sentinel
-      REDIS_URL: redis://redis:6379/0
-      S3_ENDPOINT: objectstore:8333
+      <<: *app-env
     command: [python, scripts/init_store.py]
   keycloak:
-    image: quay.io/keycloak/keycloak:26.4.2
+    image: quay.io/keycloak/keycloak:26.8.1
     command: [start-dev, --import-realm, --http-port=8080]
     environment:
       KC_BOOTSTRAP_ADMIN_USERNAME: local-admin
@@ -64,7 +73,7 @@ services:
     ports: [127.0.0.1:8081:8080]
     volumes:
       - ./.local/realm.json:/opt/keycloak/data/import/realm.json:ro
-      - keycloak-data:/opt/keycloak/data
+      - keycloak-data-v2:/opt/keycloak/data
   clamav:
     image: clamav/clamav:1.4
     volumes: [clamav-data:/var/lib/clamav]
@@ -77,7 +86,11 @@ services:
       start_period: 60s
   migrate:
     <<: *app
-    command: [sh, -c, 'alembic upgrade head && python scripts/seed_demo.py']
+    environment:
+      <<: *app-env
+      DATABASE_URL: postgresql+psycopg://sentinel:${POSTGRES_PASSWORD}@postgres:5432/sentinel
+      RUNTIME_DB_PASSWORD: ${RUNTIME_DB_PASSWORD}
+    command: [sh, -c, 'alembic upgrade head && python scripts/provision_runtime.py && python scripts/seed_demo.py']
   api:
     <<: *app
     command: [uvicorn, 'sentinel.main:app', --host, 0.0.0.0, --port, '8000', --no-access-log]
@@ -111,6 +124,16 @@ services:
       TEST_SERVICES: '1'
       AI_ASSIST_ENABLED: 'false'
       TEST_OIDC_URL: http://keycloak:8080/realms/sentinel/protocol/openid-connect/token
+      RUNTIME_DB_PASSWORD: ${RUNTIME_DB_PASSWORD}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      DEMO_INSTITUTION_PASSWORD: ${DEMO_INSTITUTION_PASSWORD}
+      DEMO_OTHER_INSTITUTION_PASSWORD: ${DEMO_OTHER_INSTITUTION_PASSWORD}
+      DEMO_REVIEWER_PASSWORD: ${DEMO_REVIEWER_PASSWORD}
+      DEMO_PGRC_PASSWORD: ${DEMO_PGRC_PASSWORD}
+      DEMO_VIGILANCE_PASSWORD: ${DEMO_VIGILANCE_PASSWORD}
+      DEMO_APPROVER_PASSWORD: ${DEMO_APPROVER_PASSWORD}
+      DEMO_ISSUER_PASSWORD: ${DEMO_ISSUER_PASSWORD}
+      DEMO_AUDITOR_PASSWORD: ${DEMO_AUDITOR_PASSWORD}
     command: [python, -m, pytest, -q, -p, 'no:cacheprovider', -m, 'not browser']
   ollama:
     image: ollama/ollama:0.40.10
@@ -122,6 +145,7 @@ volumes:
   redis-data:
   object-data:
   keycloak-data:
+  keycloak-data-v2:
   clamav-data:
   ollama-data:
 

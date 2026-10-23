@@ -1,12 +1,24 @@
 # Requirements and evidence matrix
 
+## Implemented local evidence map
+
+| Coverage | Code/test anchors | Boundary |
+|---|---|---|
+| R01-R04/R06/R08/R10/R12, E1-E3/E6 | test_intake.py, test_rules.py, test_security_qualification.py; actual API/PG/OIDC/storage/scanner | Declared onboarding, provisional regulation; no authenticity claim |
+| R05/R09, D1/D2/D9, E8 | test_intelligence.py, test_ai_boundaries.py, benchmark_extraction.py, smoke_local_ai.py | Tiny synthetic corpus, optional connected local model |
+| R07/R10/R13, D4-D7, E4-E6 | test_lifecycle.py, test_reporting.py, multi-actor browser suite | Synthetic output only, no settlement; historical/aggregate unknowns need review |
+| R11/R12, D8/D10, E7 | test_tracing.py, test_security_qualification.py, lost-response browser test, outage_drill.py, restore_drill.py, load_check.py | Local qualification; production activation/advisories remain blocked |
+
+Actual final command results live in STATUS.md and MEASUREMENTS.md. The phase column
+below records planned dependency order, including the adopted move of lifecycle to 1B.
+
 Status is maintained in STATUS.md. Planned tests are not passing-test claims.
 
 | ID | Requirement / baseline capability | Phase | Acceptance evidence |
 |---|---|---|---|
 | R01 | FastAPI/React/TypeScript modular monolith, PostgreSQL | 1 | API integration on PostgreSQL, TS build, migration restart |
 | R02 | Redis/Celery asynchronous work | 1 | Outbox to broker, replay-safe scan task, retry tests |
-| R03 | Protected documents | 1 | Scope denials, size/signature validation, private MinIO, malware/failure quarantine |
+| R03 | Protected documents | 1 | Scope denials, size/signature validation, private S3-compatible storage, malware/failure quarantine |
 | R04 | Versioned deterministic cited policies | 1/3 | Pure rule fixtures; unknown/effective-year tests; frozen evaluation hashes |
 | R05 | OCR and AI assistance, evidence links | 1 digital / 2 OCR+AI | Page/bounds/hash evidence; no-evidence review; labeled extraction evaluation |
 | R06 | Registration and verification | 1/2 | Onboarding -> FDR -> upload -> submit -> officer review |

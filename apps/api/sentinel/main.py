@@ -6,6 +6,8 @@ from uuid import uuid4
 
 from fastapi import Depends, FastAPI, File, Form, Header, HTTPException, Request, UploadFile
 from fastapi.responses import JSONResponse, Response
+from opentelemetry import trace
+from opentelemetry.trace import Status, StatusCode
 from prometheus_client import CONTENT_TYPE_LATEST, Counter, Histogram, generate_latest
 from redis import Redis
 from sqlalchemy import or_, select, text
@@ -37,9 +39,13 @@ from sentinel.schemas import (
     VersionCommand,
 )
 from sentinel.storage import read_original, scanner_ping, storage
+from sentinel.telemetry import configure
 from sentinel.transactions import audit, mutate
 
+configure('sentinel-api')
+
 app = FastAPI(title='FDR Sentinel', version='0.1.0',
+              telemetry={'tracing': False, 'metrics': False, 'logs': False, 'operation_spans': False},
               description='Synthetic regulatory workflow. Registration review is not bank verification or release.')
 app.include_router(lifecycle_router)
 app.include_router(intelligence_router)
@@ -59,17 +65,30 @@ duration = Histogram('sentinel_http_duration_seconds', 'HTTP request duration', 
 async def request_metadata(request: Request, call_next):
     request.state.request_id = str(uuid4())
     started = time.monotonic()
-    response = await call_next(request)
-    route = getattr(request.scope.get('route'), 'path', 'unmatched')
-    elapsed = time.monotonic() - started
-    requests_total.labels(request.method, route, str(response.status_code)).inc()
-    duration.labels(route).observe(elapsed)
-    response.headers['X-Request-ID'] = request.state.request_id
-    response.headers['X-Content-Type-Options'] = 'nosniff'
-    response.headers['Cache-Control'] = 'no-store'
-    logger.info(json.dumps({'request_id': request.state.request_id, 'method': request.method,
-                            'route': route, 'status': response.status_code, 'duration_ms': round(elapsed * 1000)}))
-    return response
+    with trace.get_tracer('sentinel').start_as_current_span('HTTP', record_exception=False,
+            set_status_on_exception=False) as span:
+        try:
+            response = await call_next(request)
+        except Exception as exc:
+            span.set_attribute('error.type', type(exc).__name__)
+            response = JSONResponse(status_code=500, content={'detail': 'Internal operation failed',
+                'request_id': request.state.request_id})
+        route = getattr(request.scope.get('route'), 'path', 'unmatched')
+        span.update_name(f'{request.method} {route}')
+        span.set_attribute('http.route', route)
+        span.set_attribute('http.status_code', response.status_code)
+        if response.status_code >= 500:
+            span.set_status(Status(StatusCode.ERROR))
+        trace_id = f'{span.get_span_context().trace_id:032x}'
+        elapsed = time.monotonic() - started
+        requests_total.labels(request.method, route, str(response.status_code)).inc()
+        duration.labels(route).observe(elapsed)
+        response.headers.update({'X-Request-ID': request.state.request_id, 'X-Trace-ID': trace_id,
+                                 'X-Content-Type-Options': 'nosniff', 'Cache-Control': 'no-store'})
+        logger.info(json.dumps({'request_id': request.state.request_id, 'trace_id': trace_id,
+            'method': request.method, 'route': route, 'status': response.status_code,
+            'duration_ms': round(elapsed * 1000)}))
+        return response
 
 
 @app.exception_handler(IntegrityError)

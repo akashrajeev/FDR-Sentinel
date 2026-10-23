@@ -13,7 +13,7 @@ Browser uses Authorization Code + PKCE. No password grant in the portal.
 | POST /institutions | Institution | legal_name, external_id, governance, programme, land, academic_year, exceptional_context; creates DECLARED institution + caller assignment |
 | GET /institutions | Scoped | Assigned institution list |
 | GET /institutions/{id} | Scoped | Institution detail |
-| POST /deposits | Institution maker | institution_id, bank_code, reference (transient), amount_paise, issue_date, maturity_date; returns masked typed deposit DRAFT (FDR dates required; RTGS/ONLINE dates optional) |
+| POST /deposits | Institution maker | obligation_id, deposit_type, bank_code, reference (transient), amount_paise, FDR issue_date/maturity_date or other deposited_on; returns masked typed deposit DRAFT |
 | GET /deposits | Scoped | Bounded list; optional institution_id |
 | GET /deposits/{id} | Scoped | FDR with documents, evaluations, review decisions |
 | POST /deposits/{id}/documents | Institution maker | multipart PDF <=10 MiB; immutable private object; returns QUARANTINED metadata |
@@ -72,7 +72,7 @@ anniversary from deposited_on; exception reasons require branch evidence and hum
 Case-only role bindings grant only the case and its deposit/evidence, not all institution
 records. Current list endpoints are bounded to 100; large reports need cursor pagination.
 
-## Later extended contracts (unimplemented)
+## Document intelligence contracts (implemented)
 
 Phase 2 adds GET `/deposits/{id}/intelligence`, POST `/documents/{id}/corrections`,
 POST `/corrections/{id}/decision`, POST `/discrepancies/{id}/resolve`,
