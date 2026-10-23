@@ -40,3 +40,8 @@ restore drill, signature/key rotation, retention/legal holds and external audit 
 CI uses Linux Docker dependencies, migrations and Python integration tests plus frontend
 typecheck/build. Do not broaden tests for low-impact prose changes; rerun gates after
 relevant code/configuration changes. Failed infrastructure checks are recorded honestly.
+
+
+## Adopted independent review amendments
+
+Add E1 deficient submission/return/correction; E2 RTGS/ONLINE without maturity; E3 new document invalidates prior evaluation; E4 PGRC/Vigilance and independent final signatory gate SYNTHETIC issuance; E5 closure/merger/conversion evidence and holds; E6 simultaneous stale commands only one succeeds; E7 Redis/ClamAV outage truthfully degraded, no unsafe read; E8 extraction sample size/precision/recall and measured workflow durations. Use realistic synthetic PDFs and separate truth labels; no fabricated impact baseline.

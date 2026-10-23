@@ -11,7 +11,7 @@ This plan describes work; STATUS.md is the implementation evidence register.
    extraction into Phase 1. Advanced OCR/AI remains Phase 2.
 2. Baseline Stage 1 includes release, but a small first vertical slice cannot safely
    imply all release controls. Phase 1 ends at registration review. Release endpoints
-   do not exist until Phase 3. D6/D7 are not claimed by Phase 1.
+   do not exist in Phase 1A. The adopted review brings a safe thin lifecycle and synthetic release skeleton into Phase 1B; D6/D7 require that checkpoint.
 3. APH 2024-27 regulates online security deposits and historical FDRs. Registering a
    historical FDR is not permission to create a new FDR instead of required online
    payment. Capture obligation context separately. No global ten-year FDR rule.
@@ -57,7 +57,7 @@ This plan describes work; STATUS.md is the implementation evidence register.
 4. Onboarding and FDR services; integer paise, date constraints, unique reference digest.
 5. Upload -> quarantine -> outbox -> scan -> digital extraction, retriable failure states.
 6. Pure rules evaluate context and evidence; freeze inputs/source/rule hashes.
-7. Submit -> officer return or accept registration; version checks and maker/checker.
+7. Safe submission -> PENDING_SCRUTINY even with substantive FAIL -> officer return/correction or blocker-free registration acceptance; version checks and maker/checker.
 8. React typed API forms, polling document results, review/evidence/audit timeline.
 9. Integration/security/worker tests, frontend build, Compose/browser smoke, status and Git.
 
@@ -72,3 +72,8 @@ These block production activation or later phases, not synthetic local developme
 No infrastructure split beyond API/web/worker and required dependencies. Use one Beat
 scheduler. Production deployment is a later reviewed milestone; local success is not
 production suitability or regulatory certification.
+
+
+## Adopted independent review amendments
+
+Adopt independent review P0.1-P1.6 (user-supplied review date 2026-10-24; task date 2026-10-23). No code or migrations existed, so no migration impact. Track A: Phase 1A safe deposit intake/scrutiny; Phase 1B thin maturity, replacement lineage, PGRC/Vigilance blocking, independent sign-off and SYNTHETIC output. Bring these Phase 3 tasks forward without relaxing controls. Track B: Phase 2 OCR/AI, SIMULATED adapters, extended conditions and hardening. E1-E8 are added acceptance obligations; full production qualification remains Phase 4.

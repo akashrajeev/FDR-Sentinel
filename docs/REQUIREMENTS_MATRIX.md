@@ -31,3 +31,8 @@ Status is maintained in STATUS.md. Planned tests are not passing-test claims.
 The ten public-brief capability categories in ARCHITECTURE.md are treated as sponsor
 requirements. The listed public mirror is not an authenticated sponsor acceptance
 specification; confirmation with SIH/AICTE remains necessary before production scope freeze.
+
+
+## Adopted independent review amendments
+
+Review acceptance mapping: E1 scrutiny/correction (1A), E2 obligation + typed records (1A), E3 revision/document-set invariants (1A), E4 PGRC-blocked lifecycle browser/API (1B), E5 typed reasons and evidence/holds (1B/extended 3), E6 concurrency and permanent subject separation (1A/1B), E7 degraded queue/scan states (1A/2), E8 realistic fixture measurements (2/4). D4-D7 thin skeleton moves to 1B; full historical/regulatory coverage remains 3. No phase is complete solely because its design is documented.

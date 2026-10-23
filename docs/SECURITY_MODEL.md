@@ -51,3 +51,8 @@ Rate limits at ingress and authentication endpoint are required for production; 
 OIDC brute-force protection is configured. No regulatory production claims before
 penetration testing, backup restoration, key rotation, retention policy and incident drill.
 Retention terms/data locality require sponsor/legal approval; do not invent a legal period.
+
+
+## Adopted independent review amendments
+
+No single global role: identities have many role_bindings (principal, role, scope_type, scope_id, enabled, valid_from/until). Institution self-service grants only own institution maker scope, never bureau/officer. PGRC cannot decide Vigilance; each bureau decision also needs case/institution scope. Maker/checker and independent signatory compare permanent subjects even if roles change. Readiness allows durable intake during broker outage and reports degraded processing. Scanner outage never permits read/approval. Fake bank source remains SIMULATED, never BANK_CONFIRMED.

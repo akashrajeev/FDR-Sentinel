@@ -39,3 +39,8 @@ architecture/backlog -> IMPLEMENTATION_PLAN and ARCHITECTURE_DECISIONS; source m
 and domain rules -> policy package and REQUIREMENTS_MATRIX; threat model -> SECURITY_MODEL;
 demo script -> DEMO_SCENARIOS. Avoid contradictory duplicate specifications.
 New architecture decisions must retain required hard constraints and record rationale.
+
+
+## Adopted independent review amendments
+
+ADR-013: distinct security_deposit_obligations and typed deposit_records before migration; avoid FDR-only parent model. ADR-014: PENDING_SCRUTINY accepts safe substantive failures, acceptance remains blocked; incomplete mandatory evidence stays DRAFT. ADR-015: many valid role_bindings by institution/bureau/case, no global role; permanent subject separation. ADR-016: input_revision independent of command version; policy_revision + document_set_hash required for freshness. ADR-017: lifecycle skeleton moved to Phase 1B, then extend intelligence/hardening; no bypass for demonstration. ADR-018: API supports degraded intake with durable outbox during broker outage. ADR-019: canonical full financial references deferred to managed-key encryption; HMAC version explicit. ADR-020: release reasons TERM_COMPLETED/CLOSURE/MERGER/CONVERSION/OTHER have branch evidence/holds, not generic maturity eligibility.

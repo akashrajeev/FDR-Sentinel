@@ -12,7 +12,7 @@ registry connection, legal approval, NOC or money movement exists in Phase 1.
 3. Upload fixture PDF. Observe QUARANTINED then READY after actual antivirus scan and
    digital text extraction. Inspect document hash, scan method and page-linked evidence.
 4. Evaluate: supported UG context shows cited 35-lakh base; a private-lease context
-   shows 70 lakh. Provisional-policy warning remains. Underfunded instrument fails;
+   shows 70 lakh. Provisional-policy warning remains. Underfunded instrument enters scrutiny with FAIL and cannot be accepted;
    unknown legal context requires human review. No outcome says legally compliant.
 5. Submit a funded record. Switch to assigned officer, inspect evidence and evaluation,
    return with a reason, then resubmit and accept registration. Observe version changes
@@ -34,3 +34,8 @@ NOC/sanction. This scenario is planned until all corresponding tests exist and p
 Deliberate outages: scanner offline -> document unavailable, no submission; Redis offline
 -> persisted outbox, eventual retry; duplicate worker -> no duplicated decision/evidence.
 Reset only via explicit dedicated demo/test database tooling, never manual production SQL.
+
+
+## Adopted independent review amendments
+
+Bring full lifecycle skeleton forward to Phase 1B. Deficient deposit reaches scrutiny, receives correction request, corrects and reevaluates before acceptance. RTGS/ONLINE can be registered without maturity dates. A synthetic matured legacy FDR still cannot issue while PGRC pending. Vigilance, other applicable clearances, independent approval and no holds are required. CLOSURE/MERGER/CONVERSION/OTHER reasons require extra evidence and policy review; they cannot use a maturity-only shortcut. Show all output as SYNTHETIC; never bank-confirmed or paid.

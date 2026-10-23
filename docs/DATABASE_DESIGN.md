@@ -8,10 +8,11 @@ Indexes cover tenant/list/queue/foreign keys. No real financial seed records.
 
 | Table | Ownership and invariants |
 |---|---|
-| principals | OIDC subject unique, enabled flag, role INSTITUTION/OFFICER/AUDITOR; no passwords |
+| principals | OIDC subject unique, enabled flag; no global role and no passwords |
 | institutions | AICTE-like synthetic identifier unique, legal name, governance/programme/land/context, academic year; owner subject; initial registry state DECLARED |
-| assignments | Principal + institution unique; officer read/review only in assigned institutions; no wildcard role claim |
-| instruments | Tenant FK, bank code, reference_last4 + keyed reference digest unique per bank, amount >0, maturity > issue, workflow/verification/lifecycle separated, version >=1, maker |
+| role_bindings | Principal, role, scope_type INSTITUTION/BUREAU/CASE, scope_id, enabled, validity; multiple scopes; operator-provisioned privileges |
+| security_deposit_obligations | Institution FK, regulatory_event, context, policy snapshot, independent obligation status |
+| deposit_records | Tenant FK, bank code, reference_last4 + keyed reference digest unique per bank, amount >0, type FDR/RPGF/RTGS/ONLINE/OTHER_LEGACY; FDR dates required, others optional; obligation FK; separate workflow/verification/lifecycle, command version and input_revision, maker |
 | documents | Instrument+institution composite FK, random immutable object key, SHA256, size/MIME, uploader; QUARANTINED/READY/REJECTED/FAILED; scan provenance and evidence JSON; no arbitrary URL |
 | evaluations | Instrument FK, immutable input snapshot/hash, policy/algorithm hashes, findings and evidence references, outcome PASS/FAIL/REVIEW; UTC created time |
 | review_decisions | Instrument FK, actor, disposition/reason, evaluated version, evaluation FK; append only |
@@ -21,7 +22,7 @@ Indexes cover tenant/list/queue/foreign keys. No real financial seed records.
 
 Institution and document relationships must never rely on a client-supplied tenant ID
 without parent authorization. Submitted FDR fields and originals have no update route.
-Returns move back to DRAFT; missing/replacement documents can be uploaded with a new key.
+Returns move back to DRAFT. Explicit correction changes input_revision. New immutable documents invalidate evaluation. Evaluation stores input_revision, policy_revision, document_set_hash and evaluated_at; evaluation does not change input_revision.
 
 ## Transaction and storage boundaries
 
@@ -51,3 +52,8 @@ Full bank references require envelope encryption and managed key rotation before
 
 Backups: encrypted snapshots + WAL/PITR in production; test restore into separate database,
 verify counts and audit continuity. RPO/RTO are sponsor decisions, not invented guarantees.
+
+
+## Adopted independent review amendments
+
+Separate obligations from deposit_records now. Deposit type is FDR/RPGF/RTGS/ONLINE/OTHER_LEGACY; online records have no invented maturity. Identity roles live only in many scoped role_bindings with enabled and validity dates, not principals.role. Scope types INSTITUTION/BUREAU/CASE are reserved; bureau decision authority also requires case/institution assignment. Phase 1B brings release_cases, clearances, holds, lineage and notifications forward. Evaluation freshness is (input_revision, policy_revision, document_set_hash); command version is distinct. Multipart fingerprints use verified bytes SHA and category; stable response/object IDs on replay. Unreferenced private objects need grace-period reconciliation. HMAC key version is stored; eventual managed-key encrypted canonical references require authorized reconciliation, redacted access and dual-key rotation.

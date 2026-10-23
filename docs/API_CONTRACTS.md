@@ -13,16 +13,16 @@ Browser uses Authorization Code + PKCE. No password grant in the portal.
 | POST /institutions | Institution | legal_name, external_id, governance, programme, land, academic_year, exceptional_context; creates DECLARED institution + caller assignment |
 | GET /institutions | Scoped | Assigned institution list |
 | GET /institutions/{id} | Scoped | Institution detail |
-| POST /instruments | Institution maker | institution_id, bank_code, reference (transient), amount_paise, issue_date, maturity_date; returns masked FDR DRAFT |
-| GET /instruments | Scoped | Bounded list; optional institution_id |
-| GET /instruments/{id} | Scoped | FDR with documents, evaluations, review decisions |
-| POST /instruments/{id}/documents | Institution maker | multipart PDF <=10 MiB; immutable private object; returns QUARANTINED metadata |
+| POST /deposits | Institution maker | institution_id, bank_code, reference (transient), amount_paise, issue_date, maturity_date; returns masked typed deposit DRAFT (FDR dates required; RTGS/ONLINE dates optional) |
+| GET /deposits | Scoped | Bounded list; optional institution_id |
+| GET /deposits/{id} | Scoped | FDR with documents, evaluations, review decisions |
+| POST /deposits/{id}/documents | Institution maker | multipart PDF <=10 MiB; immutable private object; returns QUARANTINED metadata |
 | GET /documents/{id}/content | Scoped | Authenticated streamed PDF attachment only if READY; audited access |
-| POST /instruments/{id}/evaluate | Scoped writer | expected_version; stores cited deterministic evaluation; bumps version |
-| POST /instruments/{id}/submit | Institution maker | expected_version; READY document + current validation; -> SUBMITTED |
-| POST /instruments/{id}/review | Assigned OFFICER | expected_version, decision ACCEPT_REGISTRATION/RETURN, reason >=10 chars; -> ACCEPTED or DRAFT; no bank/release certification |
+| POST /deposits/{id}/evaluate | Scoped writer | expected_version; stores cited deterministic evaluation; bumps version |
+| POST /deposits/{id}/submit | Institution maker | expected_version; READY document + current validation; -> PENDING_SCRUTINY even with substantive FAIL/REVIEW |
+| POST /deposits/{id}/review | Assigned OFFICER | expected_version, decision ACCEPT_REGISTRATION/RETURN, reason >=10 chars; -> ACCEPTED or DRAFT; no bank/release certification |
 | GET /audit-events | Scoped | Bounded tenant events; no unscoped financial logging |
-| GET /work-queue | OFFICER | Assigned SUBMITTED FDRs |
+| GET /work-queue | OFFICER | Assigned PENDING_SCRUTINY deposits |
 | GET /health/live | Public | Process health |
 | GET /health/ready | Public | Dependency readiness; 503 without internals if unavailable |
 | GET /metrics | Internal network | Operational counts/durations; no institution IDs or references |
@@ -41,7 +41,7 @@ Errors are `{detail: string | validation-errors, request_id?: string}`. Request 
 Registration acceptance means the officer reviewed the stored evidence and provisional
 rule result. It never creates bank confirmation, regulatory eligibility, NOC or payment.
 Unknown/provisional policy yields REVIEW and is displayed to the officer; known FAIL
-blocks submission/acceptance. Missing document extraction requires human evidence review.
+blocks acceptance, while safe deficient records may enter scrutiny. Missing document extraction requires human evidence review.
 
 ## Later contracts (unimplemented)
 
@@ -50,3 +50,8 @@ replacement and renewal requests, release-cases/submit, bureau decisions, approv
 issue-document follow baseline action endpoints. No unconstrained PATCH status.
 Release requires complete clearances, no holds, independent signatory, fresh evidence,
 current policy activation and type-specific issuer; failures must return explainable 409.
+
+
+## Adopted independent review amendments
+
+Canonical routes use /deposits (supersedes /instruments), and POST /obligations creates the distinct parent. POST /deposits/{id}/correct accepts expected_version and declarations only in DRAFT, increments input_revision and invalidates evaluation. Missing required document keeps DRAFT with an incomplete intake error. Safe substantive FAIL/REVIEW enters PENDING_SCRUTINY; unresolved blockers prevent acceptance. Mutation commands bump version, evaluation never input_revision. Fresh evaluation must match input_revision, current policy_revision and document_set_hash. Multipart request fingerprint hashes bytes + canonical category/metadata, not MIME boundaries. API DB/storage readiness is separate from Redis/worker degradation: intake persists outbox while broker is down. Phase 1B adds release request, scoped clearance, holds, independent approval and SYNTHETIC issuance; no bank instruction.
