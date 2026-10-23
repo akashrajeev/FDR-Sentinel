@@ -1,0 +1,120 @@
+x-app: &app
+  build: .
+  image: fdr-sentinel-api:local
+  env_file: .env
+  environment: &app-env
+    DATABASE_URL: postgresql+psycopg://sentinel:${POSTGRES_PASSWORD}@postgres:5432/sentinel
+    REDIS_URL: redis://redis:6379/0
+    S3_ENDPOINT: objectstore:8333
+    OIDC_JWKS_URL: http://keycloak:8080/realms/sentinel/protocol/openid-connect/certs
+    CLAMAV_HOST: clamav
+  depends_on:
+    postgres: {condition: service_healthy}
+    redis: {condition: service_healthy}
+    storage-init: {condition: service_completed_successfully}
+    keycloak: {condition: service_started}
+services:
+  postgres:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_DB: sentinel
+      POSTGRES_USER: sentinel
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Run python scripts/bootstrap.py first}
+    volumes: [postgres-data:/var/lib/postgresql]
+    ports: [127.0.0.1:55432:5432]
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U sentinel -d sentinel]
+      interval: 3s
+      retries: 30
+  redis:
+    image: redis:7.4-alpine
+    command: [redis-server, --appendonly, 'yes']
+    volumes: [redis-data:/data]
+    ports: [127.0.0.1:56379:6379]
+    healthcheck:
+      test: [CMD, redis-cli, ping]
+      interval: 3s
+      retries: 20
+  objectstore:
+    image: chrislusf/seaweedfs:4.48
+    command: mini -dir=/data
+    environment:
+      AWS_ACCESS_KEY_ID: ${S3_ACCESS_KEY}
+      AWS_SECRET_ACCESS_KEY: ${S3_SECRET_KEY}
+    volumes: [object-data:/data]
+    ports: [127.0.0.1:59000:8333]
+  storage-init:
+    build: .
+    image: fdr-sentinel-api:local
+    depends_on: [objectstore]
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+psycopg://sentinel:${POSTGRES_PASSWORD}@postgres:5432/sentinel
+      REDIS_URL: redis://redis:6379/0
+      S3_ENDPOINT: objectstore:8333
+    command: [python, scripts/init_store.py]
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.4.2
+    command: [start-dev, --import-realm, --http-port=8080]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: local-admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      KC_HOSTNAME: http://localhost:8081
+      KC_HEALTH_ENABLED: 'true'
+    ports: [127.0.0.1:8081:8080]
+    volumes:
+      - ./.local/realm.json:/opt/keycloak/data/import/realm.json:ro
+      - keycloak-data:/opt/keycloak/data
+  clamav:
+    image: clamav/clamav:1.4
+    volumes: [clamav-data:/var/lib/clamav]
+    ports: [127.0.0.1:53310:3310]
+    healthcheck:
+      test: [CMD, clamdcheck.sh]
+      interval: 10s
+      timeout: 5s
+      retries: 60
+      start_period: 60s
+  migrate:
+    <<: *app
+    command: [sh, -c, 'alembic upgrade head && python scripts/seed_demo.py']
+  api:
+    <<: *app
+    command: [uvicorn, 'sentinel.main:app', --host, 0.0.0.0, --port, '8000', --no-access-log]
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health/ready')"]
+      interval: 5s
+      retries: 30
+  worker:
+    <<: *app
+    command: [celery, -A, sentinel.jobs:celery, worker, --loglevel=INFO, --concurrency=2]
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+  beat:
+    <<: *app
+    command: [celery, -A, sentinel.jobs:celery, beat, --loglevel=INFO, --schedule=/tmp/celerybeat-schedule]
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+  web:
+    build: apps/web
+    ports: [127.0.0.1:8088:80]
+    depends_on:
+      api: {condition: service_healthy}
+  test:
+    <<: *app
+    profiles: [test]
+    environment:
+      <<: *app-env
+      DATABASE_URL: postgresql+psycopg://sentinel:${POSTGRES_PASSWORD}@postgres:5432/sentinel_test
+      TEST_SERVICES: '1'
+      TEST_OIDC_URL: http://keycloak:8080/realms/sentinel/protocol/openid-connect/token
+    command: [python, -m, pytest, -q, -p, 'no:cacheprovider', -m, 'not browser']
+volumes:
+  postgres-data:
+  redis-data:
+  object-data:
+  keycloak-data:
+  clamav-data:
+

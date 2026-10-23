@@ -1,0 +1,17 @@
+{
+  "id": "aph-2024-27.provisional.v1",
+  "source_url": "https://www.aicte.gov.in/sites/default/files/APH%20Final.pdf",
+  "edition": "2024-25 to 2026-27",
+  "source_sha256": null,
+  "source_status": "OFFICIAL_INDEXED_TEXT_DIRECT_DOWNLOAD_502",
+  "legal_effective_from": null,
+  "legal_effective_until": null,
+  "effective_date_basis": "ACADEMIC_YEAR_NOT_ASSUMED_CALENDAR_DAY",
+  "academic_years": ["2024-25", "2025-26", "2026-27"],
+  "activation": "PROVISIONAL_AMENDMENT_REVIEW_REQUIRED",
+  "clause": "1.12 / Table 1.4, printed page 10",
+  "engineering_ug_base_paise": 350000000,
+  "private_lease_multiplier": 2,
+  "release_clause": "6.46, printed pages 60-61",
+  "note": "Supported new-institution context only; historical records and exceptions need human policy review. Registration is not release eligibility."
+}

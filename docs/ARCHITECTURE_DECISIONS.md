@@ -1,5 +1,12 @@
 # Architecture decisions
 
+ADR-021 (implementation discovery): local MinIO images are no longer publicly pullable
+from Docker Hub or Quay in this environment. Its official repository is archived. Use
+maintained S3-compatible SeaweedFS 4.48 for local protected object storage, retaining the
+S3 port/adapter boundary. This changes a replaceable local dependency, not the required
+private object-storage architecture. Sources: https://github.com/minio/minio and
+https://github.com/seaweedfs/seaweedfs. Tag 4.48 availability verified against Docker Hub.
+
 | ADR | Decision | Reason / consequence |
 |---|---|---|
 | 001 | Modular monolith + Celery worker, one PostgreSQL | Required baseline; avoids distributed financial state |
