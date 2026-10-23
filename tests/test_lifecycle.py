@@ -253,3 +253,18 @@ def test_replacement_authorized_lineage_retains_original(clients):
     assert latest(clients(), old)['lifecycle_status'] == 'REPLACED'
     assert latest(clients(), old)['documents']
     assert latest(clients(), new)['verification_status'] == 'MANUALLY_REVIEWED'
+
+
+def test_financial_hold_requires_external_body_noc(clients):
+    _, case = prepared_case(clients)
+    result = post(clients('reviewer'), f"/release-cases/{case['id']}/holds", {
+        'expected_version': case['version'], 'kind': 'FINANCIAL_EMBEZZLEMENT',
+        'reason': 'Synthetic Government body financial hold; corresponding body NOC required.'})
+    assert result.status_code == 200
+    case = result.json()
+    hold = case['holds'][0]
+    assert hold['required_category'] == 'EXTERNAL_BODY_NOC'
+    wrong = post(clients('approver'), f"/release-cases/{case['id']}/holds/{hold['id']}/resolve", {
+        'expected_version': case['version'], 'resolution': 'Wrong category must not satisfy a financial hold.',
+        'evidence_document_id': case['documents'][0]['id']})
+    assert wrong.status_code == 409

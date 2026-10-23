@@ -27,3 +27,15 @@ def test_scoped_policy(changes, event, expected):
 def test_reproducible_policy_digest():
     assert len(POLICY_REVISION) == 64
     assert digest({'a': 1, 'b': 2}) == digest({'b': 2, 'a': 1})
+
+
+@pytest.mark.parametrize(('programme', 'level', 'expected'), [
+    ('ENGINEERING', 'DIPLOMA', 150000000), ('ENGINEERING', 'PG', 150000000),
+    ('PLANNING', 'UG', 150000000), ('APPLIED_ARTS', 'DIPLOMA', 150000000),
+    ('DESIGN', 'PG', 150000000), ('HMCT', 'UG', 150000000),
+    ('COMPUTER_APPLICATIONS', 'UG', 50000000), ('MANAGEMENT', 'UG', 50000000),
+    ('MANAGEMENT', 'PG', 150000000), ('COMPUTER_APPLICATIONS', 'DIPLOMA', None),
+])
+def test_table_programme_scope(programme, level, expected):
+    context = {**CONTEXT, 'programme': programme, 'level': level}
+    assert required_amount(context, 'NEW_INSTITUTION') == expected

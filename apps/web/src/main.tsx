@@ -5,6 +5,7 @@ import { api, download, identity, setToken, type Schemas } from "./api";
 import "./style.css";
 import { ReleaseDesk } from "./ReleaseDesk";
 import { IntelligencePanel } from "./IntelligencePanel";
+import { Reports } from "./Reports";
 
 type Deposit = Schemas["DepositOut"];
 type Detail = Schemas["DepositDetail"];
@@ -14,12 +15,14 @@ type Me = {
   subject: string;
   bindings: { role: string; scope_type: string; scope_id: string }[];
 };
-const money = (paise: number) =>
+const money = (paise: number | string) =>
   new Intl.NumberFormat("en-IN", {
     style: "currency",
     currency: "INR",
     maximumFractionDigits: 0,
-  }).format(paise / 100);
+  }).format(
+    typeof paise === "string" ? (BigInt(paise) + 50n) / 100n : paise / 100,
+  );
 const short = (value: string) => value.slice(0, 8).toUpperCase();
 const display = (value: string) => value.replaceAll("_", " ");
 function Badge({ value }: { value: string }) {
@@ -58,6 +61,7 @@ function App() {
   const [me, setMe] = useState<Me | null>(null);
   const [tab, setTab] = useState("Overview");
   const [records, setRecords] = useState<Deposit[]>([]);
+  const [summary, setSummary] = useState<Schemas["SummaryOut"] | null>(null);
   const [institutions, setInstitutions] = useState<Institution[]>([]);
   const [obligations, setObligations] = useState<Obligation[]>([]);
   const [selected, setSelected] = useState<Detail | null>(null);
@@ -98,18 +102,20 @@ function App() {
 
   const refresh = useCallback(async () => {
     if (!user) return;
-    const [a, b, c, d, e] = await Promise.all([
+    const [a, b, c, d, e, s] = await Promise.all([
       api<Me>("/me"),
       api<Deposit[]>("/deposits"),
       api<Institution[]>("/institutions"),
       api<Obligation[]>("/obligations"),
       api<Schemas["AuditOut"][]>("/audit-events"),
+      api<Schemas["SummaryOut"]>("/dashboard/summary"),
     ]);
     setMe(a);
     setRecords(b);
     setInstitutions(c);
     setObligations(d);
     setAudit(e);
+    setSummary(s);
     const h = await fetch("/api/v1/health/ready").then((r) => r.json());
     setHealth(display(h.status));
   }, [user]);
@@ -232,6 +238,7 @@ function App() {
           "Deposits",
           "Institutions",
           "Release cases",
+          "Reports",
           "Audit trail",
         ].map((name, i) => (
           <button
@@ -243,7 +250,7 @@ function App() {
               setForm("");
             }}
           >
-            <span>{["◫", "▤", "⌂", "⇄", "◷"][i]}</span>
+            <span>{["◫", "▤", "⌂", "⇄", "▥", "◷"][i]}</span>
             {name}
           </button>
         ))}
@@ -366,6 +373,7 @@ function App() {
                             v.governance as Schemas["PolicyContext"]["governance"],
                           programme:
                             v.programme as Schemas["PolicyContext"]["programme"],
+                          level: v.level as Schemas["PolicyContext"]["level"],
                           land: v.land as Schemas["PolicyContext"]["land"],
                           exceptional_context: v.exceptional === "yes",
                         },
@@ -374,6 +382,7 @@ function App() {
                     await api("/obligations", {
                       institution_id: institution.id,
                       regulatory_event: v.event,
+                      coverage_mode: v.coverage_mode,
                     });
                     setForm("");
                   }, "Institution and separate deposit obligation recorded.");
@@ -407,11 +416,35 @@ function App() {
                 </Field>
                 <Field label="Programme">
                   <select name="programme">
-                    <option value="ENGINEERING_UG">
-                      Engineering & Technology UG
+                    <option value="ENGINEERING">
+                      Engineering & Technology
                     </option>
+                    <option>PLANNING</option>
+                    <option>APPLIED_ARTS</option>
+                    <option>DESIGN</option>
+                    <option>HMCT</option>
+                    <option>COMPUTER_APPLICATIONS</option>
+                    <option>MANAGEMENT</option>
                     <option>OTHER</option>
                     <option>UNKNOWN</option>
+                  </select>
+                </Field>
+                <Field label="Programme level">
+                  <select name="level" defaultValue="UG">
+                    <option>DIPLOMA</option>
+                    <option>UG</option>
+                    <option>PG</option>
+                    <option>UNKNOWN</option>
+                  </select>
+                </Field>
+                <Field label="Obligation coverage">
+                  <select name="coverage_mode">
+                    <option value="SINGLE_RECORD">
+                      Single covering record
+                    </option>
+                    <option value="AGGREGATE_REVIEW">
+                      Split / aggregate deposits — human review
+                    </option>
                   </select>
                 </Field>
                 <Field label="Land / building">
@@ -555,23 +588,25 @@ function App() {
                     <div>
                       <span>Total recorded</span>
                       <strong>
-                        {records.length.toString().padStart(2, "0")}
+                        {Object.values(summary?.workflow_counts ?? {})
+                          .reduce((a, b) => a + b, 0)
+                          .toString()
+                          .padStart(2, "0")}
                       </strong>
                       <small>Across your assigned scope</small>
                     </div>
                     <div>
                       <span>Declared deposit value</span>
                       <strong>
-                        {money(records.reduce((a, d) => a + d.amount_paise, 0))}
+                        {money(summary?.declared_total_paise ?? 0)}
                       </strong>
                       <small>Institution assertions · not bank verified</small>
                     </div>
                     <div>
                       <span>Awaiting scrutiny</span>
                       <strong>
-                        {records
-                          .filter((d) => d.workflow === "PENDING_SCRUTINY")
-                          .length.toString()
+                        {(summary?.workflow_counts.PENDING_SCRUTINY ?? 0)
+                          .toString()
                           .padStart(2, "0")}
                       </strong>
                       <small>Human review required</small>
@@ -579,9 +614,8 @@ function App() {
                     <div>
                       <span>Registration accepted</span>
                       <strong>
-                        {records
-                          .filter((d) => d.workflow === "ACCEPTED")
-                          .length.toString()
+                        {(summary?.workflow_counts.ACCEPTED ?? 0)
+                          .toString()
                           .padStart(2, "0")}
                       </strong>
                       <small>Separate from release eligibility</small>
@@ -694,6 +728,7 @@ function App() {
               {tab === "Release cases" && (
                 <ReleaseDesk records={records} bindings={me?.bindings ?? []} />
               )}
+              {tab === "Reports" && <Reports />}
               {tab === "Audit trail" && (
                 <section className="panel">
                   <h2>Immutable activity trail</h2>
@@ -876,6 +911,24 @@ function App() {
                       >
                         Run current evaluation
                       </button>
+                    )}
+                  {!selected.evaluation_fresh &&
+                    selected.workflow === "ACCEPTED" &&
+                    (maker(selected.institution_id) ||
+                      reviewer(selected.institution_id)) && (
+                      <div className="policy-note">
+                        <p>
+                          Policy or evidence revision changed. Historical review
+                          is retained, but current release requires fresh
+                          scrutiny.
+                        </p>
+                        <button
+                          disabled={busy}
+                          onClick={() => command("request-revalidation")}
+                        >
+                          Request fresh policy scrutiny
+                        </button>
+                      </div>
                     )}
                   {maker(selected.institution_id) &&
                     selected.workflow === "DRAFT" && (

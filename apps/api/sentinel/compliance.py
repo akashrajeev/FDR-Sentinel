@@ -3,10 +3,10 @@ import hashlib
 import json
 from importlib.resources import files
 
-POLICY_BYTES = files('sentinel').joinpath('policies/aph-2024-27.v1.json').read_bytes()
+POLICY_BYTES = files('sentinel').joinpath('policies/aph-2024-27.v2.json').read_bytes()
 POLICY = json.loads(POLICY_BYTES)
 POLICY_REVISION = hashlib.sha256(POLICY_BYTES).hexdigest()
-ALGORITHM = 'deterministic-aph-and-evidence-v1'
+ALGORITHM = 'deterministic-aph-and-evidence-v2'
 
 
 def digest(value) -> str:
@@ -19,10 +19,14 @@ def required_amount(context: dict, regulatory_event: str) -> int | None:
         return None
     if context['governance'] in ('GOVERNMENT', 'GOVERNMENT_AIDED'):
         return 0
-    if (context['governance'] != 'PRIVATE' or context['programme'] != 'ENGINEERING_UG'
-            or context['land'] not in ('OWNED', 'PRIVATE_LEASE')):
+    if (context['governance'] != 'PRIVATE' or context['land'] not in ('OWNED', 'PRIVATE_LEASE')):
         return None
-    return POLICY['engineering_ug_base_paise'] * (
+    programme = 'ENGINEERING' if context['programme'] == 'ENGINEERING_UG' else context['programme']
+    level = 'UG' if context['programme'] == 'ENGINEERING_UG' else context.get('level', 'UG')
+    base = POLICY['table_paise'].get(programme, {}).get(level)
+    if base is None:
+        return None
+    return base * (
         POLICY['private_lease_multiplier'] if context['land'] == 'PRIVATE_LEASE' else 1)
 
 
@@ -31,7 +35,8 @@ def document_set_hash(documents) -> str:
 
 
 def evaluate(inputs: dict, documents: list) -> dict:
-    expected = required_amount(inputs['context'], inputs['regulatory_event'])
+    expected = None if inputs.get('coverage_mode') == 'AGGREGATE_REVIEW' else required_amount(
+        inputs['context'], inputs['regulatory_event'])
     findings = []
     if expected is None:
         findings.append({'code': 'UNSUPPORTED_CONTEXT', 'severity': 'REVIEW',

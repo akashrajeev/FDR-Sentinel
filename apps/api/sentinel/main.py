@@ -20,6 +20,7 @@ from sentinel.db import get_db
 from sentinel.intelligence_api import router as intelligence_router
 from sentinel.lifecycle_api import router as lifecycle_router
 from sentinel.models import AuditEvent, Deposit, Document, Institution, Obligation, Outbox, ReleaseCase
+from sentinel.reporting_api import router as reporting_router
 from sentinel.schemas import (
     AuditOut,
     Correction,
@@ -42,6 +43,7 @@ app = FastAPI(title='FDR Sentinel', version='0.1.0',
               description='Synthetic regulatory workflow. Registration review is not bank verification or release.')
 app.include_router(lifecycle_router)
 app.include_router(intelligence_router)
+app.include_router(reporting_router)
 logger = logging.getLogger('sentinel.http')
 logger.setLevel(logging.INFO)
 if not logger.handlers:

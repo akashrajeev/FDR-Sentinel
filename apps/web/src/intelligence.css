@@ -56,3 +56,22 @@
     padding: 16px;
   }
 }
+.report-bars {
+  margin: 24px 0;
+}
+.report-bars > div {
+  display: grid;
+  grid-template-columns: 170px 1fr 45px;
+  align-items: center;
+  gap: 14px;
+  margin: 13px 0;
+  font-size: 10px;
+}
+.report-bars > div > div {
+  height: 12px;
+  background: #6bb89b;
+  border-radius: 3px;
+}
+.report-bars strong {
+  text-align: right;
+}

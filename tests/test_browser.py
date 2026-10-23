@@ -171,3 +171,22 @@ def test_browser_scanned_evidence_annotation_and_simulated_bank():
         officer.get_by_role('heading', name='Document intelligence & source review').scroll_into_view_if_needed()
         officer.screenshot(path='.local/browser/scanned-evidence.png', full_page=True)
         browser.close()
+
+
+def test_browser_scoped_reports_and_csv_download():
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch(channel=os.getenv('BROWSER_CHANNEL', 'chromium'))
+        page = browser.new_context(viewport={'width': 1440, 'height': 1000}, accept_downloads=True).new_page()
+        login(page, 'reviewer')
+        page.get_by_role('button', name='Reports').first.click()
+        expect(page.get_by_role('heading', name='Scoped operations report')).to_be_visible()
+        page.get_by_label('Search institution, bank, record ID or reference last four').fill('DEMO')
+        page.get_by_role('button', name='Search scoped records', exact=True).click()
+        with page.expect_download() as download:
+            page.get_by_role('button', name='Export scoped CSV', exact=True).click()
+        target = Path('.local/browser/scoped-report.csv')
+        download.value.save_as(target)
+        content = target.read_text(encoding='utf-8')
+        assert 'SYNTHETIC' in content and 'reference_digest' not in content
+        page.screenshot(path='.local/browser/reports.png', full_page=True)
+        browser.close()

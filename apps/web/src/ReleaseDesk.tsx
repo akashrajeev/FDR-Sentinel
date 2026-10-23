@@ -469,6 +469,7 @@ export function ReleaseDesk({
                         "MERGER_ORDER",
                         "CONVERSION_ORDER",
                         "SUPPORTING",
+                        "EXTERNAL_BODY_NOC",
                       ].map((c) => (
                         <option key={c}>{c}</option>
                       ))}
@@ -620,12 +621,22 @@ export function ReleaseDesk({
                   className="form-grid"
                   onSubmit={(e) => {
                     e.preventDefault();
-                    command("holds", { reason: val(e.currentTarget).reason });
+                    const v = val(e.currentTarget);
+                    command("holds", { reason: v.reason, kind: v.kind });
                   }}
                 >
                   <label className="field">
                     <span>Add blocking hold</span>
                     <textarea name="reason" minLength={10} required />
+                  </label>
+                  <label className="field">
+                    <span>Hold category</span>
+                    <select name="kind" aria-label="Hold category">
+                      <option>MANUAL</option>
+                      <option>FINANCIAL_EMBEZZLEMENT</option>
+                      <option>LEGAL</option>
+                      <option>REGULATORY_EXCEPTION</option>
+                    </select>
                   </label>
                   <button disabled={busy}>Record hold</button>
                 </form>

@@ -15,6 +15,7 @@ class ReleaseOut(StrictModel):
     deposit_id: str
     institution_id: str
     reason: str
+    policy_revision: str
     state: str
     version: int
     input_revision: int
@@ -42,6 +43,7 @@ class ApprovalIn(VersionCommand):
 
 class HoldIn(VersionCommand):
     reason: str = Field(min_length=10, max_length=2000)
+    kind: Literal['MANUAL', 'FINANCIAL_EMBEZZLEMENT', 'LEGAL', 'REGULATORY_EXCEPTION'] = 'MANUAL'
 
 
 class HoldResolution(VersionCommand):

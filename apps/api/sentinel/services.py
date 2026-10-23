@@ -108,6 +108,12 @@ def documents_for(db, deposit, active_only=True):
 def detail(db, actor, deposit_id):
     deposit = get_deposit(db, actor, deposit_id)
     result = dto(deposit, DepositOut)
+    result['current_policy_revision'] = POLICY_REVISION
+    try:
+        current_evaluation(db, deposit)
+        result['evaluation_fresh'] = True
+    except HTTPException:
+        result['evaluation_fresh'] = False
     result['documents'] = [dto(d, DocumentOut) for d in documents_for(db, deposit, active_only=False)]
     result['evaluations'] = [dto(e, EvaluationOut) for e in db.scalars(select(Evaluation).where(
         Evaluation.deposit_id == deposit.id).order_by(Evaluation.evaluated_at.desc()).limit(20))]
@@ -175,6 +181,7 @@ def build_inputs(db, deposit):
                              'maturity_date': deposit.maturity_date, 'deposited_on': deposit.deposited_on,
                              'deposit_type': deposit.deposit_type, 'context': obligation.context,
                              'regulatory_event': obligation.regulatory_event,
+                             'coverage_mode': obligation.coverage_mode,
                              'institution_external_id': institution.external_id})
 
 

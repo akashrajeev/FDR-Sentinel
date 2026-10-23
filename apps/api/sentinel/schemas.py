@@ -11,7 +11,9 @@ class StrictModel(BaseModel):
 class PolicyContext(StrictModel):
     academic_year: str = Field(pattern=r'^20\d{2}-\d{2}$')
     governance: Literal['PRIVATE', 'GOVERNMENT', 'GOVERNMENT_AIDED', 'UNKNOWN']
-    programme: Literal['ENGINEERING_UG', 'OTHER', 'UNKNOWN']
+    programme: Literal['ENGINEERING_UG', 'ENGINEERING', 'PLANNING', 'APPLIED_ARTS', 'DESIGN', 'HMCT',
+                       'COMPUTER_APPLICATIONS', 'MANAGEMENT', 'OTHER', 'UNKNOWN']
+    level: Literal['DIPLOMA', 'UG', 'PG', 'UNKNOWN'] = 'UG'
     land: Literal['OWNED', 'PRIVATE_LEASE', 'OTHER', 'UNKNOWN']
     exceptional_context: bool = True
 
@@ -30,6 +32,7 @@ class InstitutionOut(InstitutionIn):
 class ObligationIn(StrictModel):
     institution_id: str
     regulatory_event: Literal['NEW_INSTITUTION', 'HISTORICAL_RECORD', 'OTHER']
+    coverage_mode: Literal['SINGLE_RECORD', 'AGGREGATE_REVIEW'] = 'SINGLE_RECORD'
 
 
 class ObligationOut(ObligationIn):
@@ -121,6 +124,8 @@ class EvaluationOut(StrictModel):
 
 
 class DepositDetail(DepositOut):
+    current_policy_revision: str
+    evaluation_fresh: bool
     documents: list[DocumentOut]
     evaluations: list[EvaluationOut]
     decisions: list[dict[str, Any]]
@@ -135,3 +140,19 @@ class AuditOut(StrictModel):
     detail: dict[str, Any]
     request_id: str
     created_at: datetime
+
+
+class SummaryOut(StrictModel):
+    as_of: date
+    mode: str
+    workflow_counts: dict[str, int]
+    stored_lifecycle_counts: dict[str, int]
+    declared_total_paise: str
+    fdr_matured_from_dates: int
+    fdr_upcoming_90_days: int
+    release_case_counts: dict[str, int]
+    actual_financial_releases: int
+    external_verification: str
+    completed_synthetic_case_time: dict[str, Any]
+    policy_revision: str
+    policy_status: str

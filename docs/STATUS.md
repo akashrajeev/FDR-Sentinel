@@ -112,3 +112,26 @@ with explicit revalidation; Phase 4 fresh-stack waits, restricted database runti
 resilience/restore/load/security qualification and deployment runbooks. Official amendment
 review, authorized signatories, production identity/MFA/data policies and genuine external
 contracts remain sponsor dependencies. No real release/settlement is implemented or claimed.
+
+## Phase 3 — completed reporting and policy/revalidation extension
+
+Added paginated scoped search, complete-scope database aggregate dashboards, safe CSV
+export with audit and spreadsheet-formula escaping; persisted synthetic case timing with
+sample count and explicit automated-demo limitations; the broader cited Table 1.4 fixture
+for programme/level combinations; single-record vs aggregate-review obligation scope;
+fresh policy/evidence indicators; explicit revalidation that preserves prior decisions
+and invalidates pending release clearances; release policy snapshots and conservative
+bureau inventory; typed financial-embezzlement holds requiring EXTERNAL_BODY_NOC evidence;
+configurable maturity bands; operator scope provisioning with reasons/validity and audit.
+Aggregate monetary totals use exact decimal strings, avoiding JavaScript integer overflow.
+
+Executed evidence: `docker compose --profile test run --rm test`: **60 passed**, four
+browser tests deselected, 17.61s. `.venv\Scripts\python scripts/local.py -m pytest -q -m
+browser`: **4 passed**, 60 deselected, 50.50s. TypeScript/Vite and Ruff passed. Reporting
+screen inspected, actual authenticated CSV download verified. All prior workflow gates
+remain tested. Policy v1 remains in the repository; evaluation snapshots retain old sources.
+
+Limits: programme tables do not settle historical eras, existing-deposit credits,
+multi-programme aggregates, authentic bank data or current amendments. Such contexts
+remain human-review paths, and all legal activation is blocked. No production regulatory
+coverage is claimed. Phase 4 operational qualification is next.

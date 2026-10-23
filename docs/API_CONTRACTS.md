@@ -45,6 +45,13 @@ blocks acceptance, while safe deficient records may enter scrutiny. Missing docu
 
 ## Lifecycle milestone contracts
 
+Phase 3 adds GET `/policies/current`, POST `/deposits/{id}/request-revalidation`,
+GET `/search/deposits?q=&workflow=&after=&limit=`, GET `/dashboard/summary` and
+GET `/reports/deposits.csv`. Summary aggregate paise uses a decimal **string** to
+preserve exact totals beyond JavaScript's safe integer range. Search is keyset-paginated
+by UUID; export is independently capped at 10000 rows and audited. Financial holds have
+typed categories and can require EXTERNAL_BODY_NOC; release policy snapshots must match.
+
 Implemented in Phase 1B once its tests pass: POST/GET `/release-cases`, GET
 `/release-cases/{id}`, POST `{id}/documents`, `{id}/submit`,
 `{id}/clearances/{bureau}/decision`, `{id}/return`, `{id}/holds`,

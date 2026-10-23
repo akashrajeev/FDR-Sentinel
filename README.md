@@ -72,6 +72,16 @@ independent approval and type-specific synthetic issuance. Only synthetic NOC/sa
 outputs are generated; they carry no financial authority and do not mark settlement.
 The same tab provides maturity monitoring and authorized replacement/renewal lineage.
 
+Reports includes complete-scope totals, paginated search, safe audited CSV downloads and
+measured synthetic case timings. Policy changes trigger explicit fresh scrutiny; historic
+reviews are retained. Broader programme fixtures remain provisional, with unknown/aggregate
+contexts routed to human review. Financial holds require external-body NOC evidence.
+
+For a newly onboarded institution, an operator assigns a reviewer through
+`scripts/grant_scope.py` (run via `scripts/local.py`, use `--help`). It requires exact
+OIDC subject, role, institution/case/bureau scope, reason and optional expiry. No user
+self-service can grant officer roles. It does not authorize financial decisions.
+
 ## Documents and optional local AI
 
 The worker scans with ClamAV, extracts digital PDF fields and runs real Tesseract OCR

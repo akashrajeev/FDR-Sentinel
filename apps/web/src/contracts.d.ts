@@ -346,6 +346,91 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/policies/current": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Policy */
+    get: operations["policy_api_v1_policies_current_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/deposits/{deposit_id}/request-revalidation": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Revalidate */
+    post: operations["revalidate_api_v1_deposits__deposit_id__request_revalidation_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/search/deposits": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Search */
+    get: operations["search_api_v1_search_deposits_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/dashboard/summary": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Summary */
+    get: operations["summary_api_v1_dashboard_summary_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/reports/deposits.csv": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Export */
+    get: operations["export_api_v1_reports_deposits_csv_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/health/live": {
     parameters: {
       query?: never;
@@ -798,6 +883,10 @@ export interface components {
        * Format: date-time
        */
       created_at: string;
+      /** Current Policy Revision */
+      current_policy_revision: string;
+      /** Evaluation Fresh */
+      evaluation_fresh: boolean;
       /** Documents */
       documents: components["schemas"]["DocumentOut"][];
       /** Evaluations */
@@ -934,6 +1023,13 @@ export interface components {
       expected_version: number;
       /** Reason */
       reason: string;
+      /**
+       * Kind
+       * @default MANUAL
+       * @enum {string}
+       */
+      kind:
+        "MANUAL" | "FINANCIAL_EMBEZZLEMENT" | "LEGAL" | "REGULATORY_EXCEPTION";
     };
     /** HoldResolution */
     HoldResolution: {
@@ -973,6 +1069,12 @@ export interface components {
        * @enum {string}
        */
       regulatory_event: "NEW_INSTITUTION" | "HISTORICAL_RECORD" | "OTHER";
+      /**
+       * Coverage Mode
+       * @default SINGLE_RECORD
+       * @enum {string}
+       */
+      coverage_mode: "SINGLE_RECORD" | "AGGREGATE_REVIEW";
     };
     /** ObligationOut */
     ObligationOut: {
@@ -983,6 +1085,12 @@ export interface components {
        * @enum {string}
        */
       regulatory_event: "NEW_INSTITUTION" | "HISTORICAL_RECORD" | "OTHER";
+      /**
+       * Coverage Mode
+       * @default SINGLE_RECORD
+       * @enum {string}
+       */
+      coverage_mode: "SINGLE_RECORD" | "AGGREGATE_REVIEW";
       /** Id */
       id: string;
       context: components["schemas"]["PolicyContext"];
@@ -1006,7 +1114,23 @@ export interface components {
        * Programme
        * @enum {string}
        */
-      programme: "ENGINEERING_UG" | "OTHER" | "UNKNOWN";
+      programme:
+        | "ENGINEERING_UG"
+        | "ENGINEERING"
+        | "PLANNING"
+        | "APPLIED_ARTS"
+        | "DESIGN"
+        | "HMCT"
+        | "COMPUTER_APPLICATIONS"
+        | "MANAGEMENT"
+        | "OTHER"
+        | "UNKNOWN";
+      /**
+       * Level
+       * @default UG
+       * @enum {string}
+       */
+      level: "DIPLOMA" | "UG" | "PG" | "UNKNOWN";
       /**
        * Land
        * @enum {string}
@@ -1038,6 +1162,8 @@ export interface components {
       institution_id: string;
       /** Reason */
       reason: string;
+      /** Policy Revision */
+      policy_revision: string;
       /** State */
       state: string;
       /** Version */
@@ -1123,6 +1249,46 @@ export interface components {
        * @enum {string}
        */
       scenario: "MATCH" | "AMOUNT_MISMATCH" | "UNAVAILABLE";
+    };
+    /** SummaryOut */
+    SummaryOut: {
+      /**
+       * As Of
+       * Format: date
+       */
+      as_of: string;
+      /** Mode */
+      mode: string;
+      /** Workflow Counts */
+      workflow_counts: {
+        [key: string]: number;
+      };
+      /** Stored Lifecycle Counts */
+      stored_lifecycle_counts: {
+        [key: string]: number;
+      };
+      /** Declared Total Paise */
+      declared_total_paise: string;
+      /** Fdr Matured From Dates */
+      fdr_matured_from_dates: number;
+      /** Fdr Upcoming 90 Days */
+      fdr_upcoming_90_days: number;
+      /** Release Case Counts */
+      release_case_counts: {
+        [key: string]: number;
+      };
+      /** Actual Financial Releases */
+      actual_financial_releases: number;
+      /** External Verification */
+      external_verification: string;
+      /** Completed Synthetic Case Time */
+      completed_synthetic_case_time: {
+        [key: string]: unknown;
+      };
+      /** Policy Revision */
+      policy_revision: string;
+      /** Policy Status */
+      policy_status: string;
     };
     /** ValidationError */
     ValidationError: {
@@ -1894,6 +2060,137 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  policy_api_v1_policies_current_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": unknown;
+        };
+      };
+    };
+  };
+  revalidate_api_v1_deposits__deposit_id__request_revalidation_post: {
+    parameters: {
+      query?: never;
+      header?: {
+        "idempotency-key"?: string | null;
+      };
+      path: {
+        deposit_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["VersionCommand"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["DepositOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  search_api_v1_search_deposits_get: {
+    parameters: {
+      query?: {
+        q?: string;
+        workflow?: string | null;
+        after?: string | null;
+        limit?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["DepositOut"][];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  summary_api_v1_dashboard_summary_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["SummaryOut"];
+        };
+      };
+    };
+  };
+  export_api_v1_reports_deposits_csv_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": unknown;
         };
       };
     };

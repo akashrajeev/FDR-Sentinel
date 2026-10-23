@@ -359,7 +359,9 @@ export function IntelligencePanel({
             </label>
             <button
               className="primary"
-              disabled={busy || bounds[2] <= bounds[0] || bounds[3] <= bounds[1]}
+              disabled={
+                busy || bounds[2] <= bounds[0] || bounds[3] <= bounds[1]
+              }
             >
               Propose evidence correction
             </button>

@@ -1,6 +1,7 @@
 """Human-governed lifecycle services. Issuance here is exclusively synthetic."""
 import hashlib
 from datetime import datetime
+from decimal import Decimal
 from zoneinfo import ZoneInfo
 
 import pymupdf
@@ -8,7 +9,8 @@ from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 
-from sentinel.compliance import document_set_hash
+from sentinel.compliance import POLICY, POLICY_REVISION, document_set_hash
+from sentinel.config import settings
 from sentinel.models import (
     ClearanceDecision,
     Deposit,
@@ -27,6 +29,7 @@ from sentinel.storage import put_original
 from sentinel.transactions import audit
 
 RELEASE_CATEGORIES = {'REQUEST_LETTER', 'AFFIDAVIT_6', 'APPROVAL_LETTER'}
+OPTIONAL_RELEASE_CATEGORIES = {'EXTERNAL_BODY_NOC'}
 BRANCH_EVIDENCE = {'CLOSURE': 'CLOSURE_ORDER', 'MERGER': 'MERGER_ORDER',
                    'CONVERSION': 'CONVERSION_ORDER', 'OTHER': 'SUPPORTING'}
 
@@ -83,13 +86,14 @@ def blockers(db, case):
 
 def case_detail(db, case):
     return {'id': case.id, 'deposit_id': case.deposit_id, 'institution_id': case.institution_id,
-            'reason': case.reason, 'state': case.state, 'version': case.version,
+            'reason': case.reason, 'policy_revision': case.policy_revision, 'state': case.state, 'version': case.version,
             'input_revision': case.input_revision, 'required_bureaus': case.required_bureaus,
             'approver': case.approver, 'issuer': case.issuer, 'output_document_id': case.output_document_id,
             'clearances': [{'bureau': c.bureau, 'decision': c.decision, 'actor': c.actor,
                             'reason': c.reason, 'evidence_document_id': c.evidence_document_id}
                            for c in clearances(db, case)],
-            'holds': [{'id': h.id, 'reason': h.reason, 'active': h.active, 'resolution': h.resolution}
+            'holds': [{'id': h.id, 'reason': h.reason, 'kind': h.kind, 'required_category': h.required_category,
+                       'active': h.active, 'resolution': h.resolution}
                       for h in holds(db, case)],
             'documents': [dto(d, DocumentOut) for d in case_evidence(db, case)],
             'blockers': blockers(db, case), 'mode': 'SYNTHETIC_ONLY_NO_FINANCIAL_AUTHORITY'}
@@ -110,11 +114,13 @@ def create_case(db, actor, body, request_id):
         if deposit.deposit_type == 'FDR' and deposit.maturity_date > today():
             raise HTTPException(409, 'FDR has not matured; maturity still does not imply eligibility')
     case = ReleaseCase(deposit_id=deposit.id, institution_id=deposit.institution_id,
-                       reason=body.reason, maker=actor.subject)
+                       reason=body.reason, maker=actor.subject, policy_revision=POLICY_REVISION,
+                       required_bureaus=list(POLICY['release_minimum_bureaus']))
     db.add(case)
     db.flush()
     if body.reason in BRANCH_EVIDENCE:
         db.add(Hold(case_id=case.id, authority='policy-engine',
+                    kind='REGULATORY_EXCEPTION', required_category=BRANCH_EVIDENCE[body.reason],
                     reason=f'{body.reason}: additional evidence and human policy applicability review required'))
         db.flush()
     audit(db, deposit.institution_id, actor.subject, 'RELEASE_CASE_CREATED', case.id,
@@ -125,7 +131,7 @@ def create_case(db, actor, body, request_id):
 def upload_case_document(db, actor, case_id, data, category, request_id):
     case = get_case(db, actor, case_id, lock=True, roles=['MAKER'])
     case_version(case, case.version, ['DRAFT'])
-    if category not in RELEASE_CATEGORIES | set(BRANCH_EVIDENCE.values()):
+    if category not in RELEASE_CATEGORIES | OPTIONAL_RELEASE_CATEGORIES | set(BRANCH_EVIDENCE.values()):
         raise HTTPException(422, 'Unsupported release evidence category')
     if len(case_documents(db, case)) >= 20:
         raise HTTPException(409, 'Release evidence limit reached')
@@ -182,6 +188,7 @@ def submit_case(db, actor, case_id, body, request_id):
     if deposit.workflow != 'ACCEPTED' or evaluation.result['outcome'] == 'FAIL':
         raise HTTPException(409, 'Registration review must be complete without unresolved blockers')
     case.submitted_document_hash = validate_case_evidence(db, case)
+    case.policy_revision = POLICY_REVISION
     case.state = 'CLEARANCES_PENDING'
     case.version += 1
     audit(db, case.institution_id, actor.subject, 'RELEASE_SUBMITTED_SYNTHETIC', case.id,
@@ -233,7 +240,8 @@ def add_hold(db, actor, case_id, body, request_id):
     case_version(case, body.expected_version)
     if case.state == 'ISSUED_SYNTHETIC':
         raise HTTPException(409, 'Already issued; requires separate incident/revocation process')
-    db.add(Hold(case_id=case.id, authority=actor.subject, reason=body.reason))
+    db.add(Hold(case_id=case.id, authority=actor.subject, reason=body.reason, kind=body.kind,
+                required_category='EXTERNAL_BODY_NOC' if body.kind == 'FINANCIAL_EMBEZZLEMENT' else None))
     if case.state == 'APPROVED_SYNTHETIC':
         case.state = 'APPROVAL_REVIEW'
         case.approver = None
@@ -269,6 +277,8 @@ def resolve_hold(db, actor, case_id, hold_id, body, request_id):
     document = evidence_in_case(db, case, body.evidence_document_id)
     if hold.authority == 'policy-engine' and document.category != BRANCH_EVIDENCE.get(case.reason):
         raise HTTPException(409, 'Branch-specific order/evidence required to resolve policy hold')
+    if hold.required_category and document.category != hold.required_category:
+        raise HTTPException(409, f'{hold.required_category} is required to resolve this hold')
     hold.active = False
     hold.resolved_by = actor.subject
     hold.resolution = body.resolution
@@ -280,6 +290,8 @@ def resolve_hold(db, actor, case_id, hold_id, body, request_id):
 
 
 def gate_approval(db, case):
+    if case.policy_revision != POLICY_REVISION:
+        raise HTTPException(409, 'Release policy changed; request fresh registration and clearance scrutiny')
     blocking = blockers(db, case)
     if blocking:
         raise HTTPException(409, 'Release blocked: ' + '; '.join(blocking))
@@ -333,7 +345,7 @@ def issue_case(db, actor, case_id, body, request_id):
     page.insert_textbox(pymupdf.Rect(45, 150, 550, 500),
                         f'NOT A VALID {output_kind}. NO PAYMENT OR BANK AUTHORITY.\n\n'
                         f'Case: {case.id}\nDeposit: {case.deposit_id}\n'
-                        f'Deposit type: {deposit.deposit_type}\nDeclared INR: {deposit.amount_paise / 100:.2f}\n'
+                        f'Deposit type: {deposit.deposit_type}\nDeclared INR: {Decimal(deposit.amount_paise) / 100:.2f}\n'
                         f'Approval actor: {case.approver}\nIssuance actor: {actor.subject}\n\n'
                         'External bank/AICTE verification: NOT CONNECTED.\n'
                         'Regulatory policy: provisional APH 2024-27 fixture.\n'
@@ -423,14 +435,17 @@ def run_maturity(db, as_of, institution_ids=None, actor='scheduler', request_id=
     created = 0
     for deposit in db.scalars(query.with_for_update(skip_locked=True)):
         days = (deposit.maturity_date - as_of).days
-        status = 'MATURED' if days <= 0 else 'APPROACHING_MATURITY' if days <= 90 else 'ACTIVE'
+        thresholds = sorted(set(t for t in settings().maturity_thresholds if t > 0))
+        if not thresholds:
+            raise RuntimeError('At least one positive maturity reminder threshold is required')
+        status = 'MATURED' if days <= 0 else 'APPROACHING_MATURITY' if days <= max(thresholds) else 'ACTIVE'
         if deposit.lifecycle_status != status:
             deposit.lifecycle_status = status
             deposit.version += 1
             audit(db, deposit.institution_id, actor, 'MATURITY_STATE_UPDATED', deposit.id,
                   {'as_of': as_of.isoformat(), 'lifecycle_status': status,
                    'never_automatic_release': True}, request_id)
-        threshold = 0 if days <= 0 else 7 if days <= 7 else 30 if days <= 30 else 90 if days <= 90 else None
+        threshold = 0 if days <= 0 else next((t for t in thresholds if days <= t), None)
         if threshold is not None:
             result = db.execute(insert(Notification).values(
                 id=uid(), institution_id=deposit.institution_id, deposit_id=deposit.id,

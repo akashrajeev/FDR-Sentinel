@@ -16,7 +16,7 @@ def effective_documents(db, documents):
         evidence = list(document.evidence)
         corrections = db.scalars(select(ExtractionCorrection).where(
             ExtractionCorrection.document_id == document.id, ExtractionCorrection.status == 'CONFIRMED'
-        ).order_by(ExtractionCorrection.decided_at)).all()
+        ).order_by(ExtractionCorrection.decided_at, ExtractionCorrection.id)).all()
         for correction in corrections:
             evidence = [e for e in evidence if e['field'] != correction.field]
             evidence.append({'field': correction.field,

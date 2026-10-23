@@ -1,0 +1,28 @@
+{
+  "id": "aph-2024-27.provisional.v2",
+  "source_url": "https://www.aicte.gov.in/sites/default/files/APH%20Final.pdf",
+  "edition": "2024-25 to 2026-27",
+  "source_sha256": null,
+  "source_status": "OFFICIAL_INDEXED_TEXT_DIRECT_DOWNLOAD_502",
+  "legal_effective_from": null,
+  "legal_effective_until": null,
+  "effective_date_basis": "ACADEMIC_YEAR_NOT_ASSUMED_CALENDAR_DAY",
+  "academic_years": ["2024-25", "2025-26", "2026-27"],
+  "activation": "PROVISIONAL_AMENDMENT_REVIEW_REQUIRED",
+  "clause": "1.12 / Table 1.4, printed page 10",
+  "engineering_ug_base_paise": 350000000,
+  "private_lease_multiplier": 2,
+  "table_paise": {
+    "ENGINEERING": {"DIPLOMA": 150000000, "UG": 350000000, "PG": 150000000},
+    "PLANNING": {"DIPLOMA": 150000000, "UG": 150000000, "PG": 150000000},
+    "APPLIED_ARTS": {"DIPLOMA": 150000000, "UG": 150000000, "PG": 150000000},
+    "DESIGN": {"DIPLOMA": 150000000, "UG": 150000000, "PG": 150000000},
+    "HMCT": {"DIPLOMA": 150000000, "UG": 150000000, "PG": 150000000},
+    "COMPUTER_APPLICATIONS": {"UG": 50000000, "PG": 150000000},
+    "MANAGEMENT": {"UG": 50000000, "PG": 150000000}
+  },
+  "release_clause": "6.46, printed pages 60-61",
+  "release_minimum_bureaus": ["PGRC", "VIGILANCE", "GRANTS"],
+  "release_bureau_basis": "Conservative synthetic product mapping; not an exhaustive authorized production bureau inventory",
+  "note": "New-institution single-record context only; historical deposits, credit, multiple programmes, aggregate coverage and exceptions require human policy review. All amendments and legal effectivity need policy-owner confirmation. No legal release authority."
+}

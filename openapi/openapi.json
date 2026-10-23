@@ -1322,6 +1322,235 @@
         }
       }
     },
+    "/api/v1/policies/current": {
+      "get": {
+        "summary": "Policy",
+        "operationId": "policy_api_v1_policies_current_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/deposits/{deposit_id}/request-revalidation": {
+      "post": {
+        "summary": "Revalidate",
+        "operationId": "revalidate_api_v1_deposits__deposit_id__request_revalidation_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "deposit_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Deposit Id"
+            }
+          },
+          {
+            "name": "idempotency-key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Idempotency-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VersionCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DepositOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/search/deposits": {
+      "get": {
+        "summary": "Search",
+        "operationId": "search_api_v1_search_deposits_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 100,
+              "default": "",
+              "title": "Q"
+            }
+          },
+          {
+            "name": "workflow",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Workflow"
+            }
+          },
+          {
+            "name": "after",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "After"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DepositOut"
+                  },
+                  "title": "Response Search Api V1 Search Deposits Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/dashboard/summary": {
+      "get": {
+        "summary": "Summary",
+        "operationId": "summary_api_v1_dashboard_summary_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SummaryOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/reports/deposits.csv": {
+      "get": {
+        "summary": "Export",
+        "operationId": "export_api_v1_reports_deposits_csv_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/health/live": {
       "get": {
         "summary": "Live",
@@ -2677,6 +2906,14 @@
             "format": "date-time",
             "title": "Created At"
           },
+          "current_policy_revision": {
+            "type": "string",
+            "title": "Current Policy Revision"
+          },
+          "evaluation_fresh": {
+            "type": "boolean",
+            "title": "Evaluation Fresh"
+          },
           "documents": {
             "items": {
               "$ref": "#/components/schemas/DocumentOut"
@@ -2716,6 +2953,8 @@
           "version",
           "input_revision",
           "created_at",
+          "current_policy_revision",
+          "evaluation_fresh",
           "documents",
           "evaluations",
           "decisions"
@@ -3090,6 +3329,17 @@
             "maxLength": 2000,
             "minLength": 10,
             "title": "Reason"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "MANUAL",
+              "FINANCIAL_EMBEZZLEMENT",
+              "LEGAL",
+              "REGULATORY_EXCEPTION"
+            ],
+            "title": "Kind",
+            "default": "MANUAL"
           }
         },
         "additionalProperties": false,
@@ -3207,6 +3457,15 @@
               "OTHER"
             ],
             "title": "Regulatory Event"
+          },
+          "coverage_mode": {
+            "type": "string",
+            "enum": [
+              "SINGLE_RECORD",
+              "AGGREGATE_REVIEW"
+            ],
+            "title": "Coverage Mode",
+            "default": "SINGLE_RECORD"
           }
         },
         "additionalProperties": false,
@@ -3231,6 +3490,15 @@
               "OTHER"
             ],
             "title": "Regulatory Event"
+          },
+          "coverage_mode": {
+            "type": "string",
+            "enum": [
+              "SINGLE_RECORD",
+              "AGGREGATE_REVIEW"
+            ],
+            "title": "Coverage Mode",
+            "default": "SINGLE_RECORD"
           },
           "id": {
             "type": "string",
@@ -3293,10 +3561,28 @@
             "type": "string",
             "enum": [
               "ENGINEERING_UG",
+              "ENGINEERING",
+              "PLANNING",
+              "APPLIED_ARTS",
+              "DESIGN",
+              "HMCT",
+              "COMPUTER_APPLICATIONS",
+              "MANAGEMENT",
               "OTHER",
               "UNKNOWN"
             ],
             "title": "Programme"
+          },
+          "level": {
+            "type": "string",
+            "enum": [
+              "DIPLOMA",
+              "UG",
+              "PG",
+              "UNKNOWN"
+            ],
+            "title": "Level",
+            "default": "UG"
           },
           "land": {
             "type": "string",
@@ -3367,6 +3653,10 @@
           "reason": {
             "type": "string",
             "title": "Reason"
+          },
+          "policy_revision": {
+            "type": "string",
+            "title": "Policy Revision"
           },
           "state": {
             "type": "string",
@@ -3464,6 +3754,7 @@
           "deposit_id",
           "institution_id",
           "reason",
+          "policy_revision",
           "state",
           "version",
           "input_revision",
@@ -3607,6 +3898,91 @@
           "scenario"
         ],
         "title": "SimulationIn"
+      },
+      "SummaryOut": {
+        "properties": {
+          "as_of": {
+            "type": "string",
+            "format": "date",
+            "title": "As Of"
+          },
+          "mode": {
+            "type": "string",
+            "title": "Mode"
+          },
+          "workflow_counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Workflow Counts"
+          },
+          "stored_lifecycle_counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Stored Lifecycle Counts"
+          },
+          "declared_total_paise": {
+            "type": "string",
+            "title": "Declared Total Paise"
+          },
+          "fdr_matured_from_dates": {
+            "type": "integer",
+            "title": "Fdr Matured From Dates"
+          },
+          "fdr_upcoming_90_days": {
+            "type": "integer",
+            "title": "Fdr Upcoming 90 Days"
+          },
+          "release_case_counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Release Case Counts"
+          },
+          "actual_financial_releases": {
+            "type": "integer",
+            "title": "Actual Financial Releases"
+          },
+          "external_verification": {
+            "type": "string",
+            "title": "External Verification"
+          },
+          "completed_synthetic_case_time": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Completed Synthetic Case Time"
+          },
+          "policy_revision": {
+            "type": "string",
+            "title": "Policy Revision"
+          },
+          "policy_status": {
+            "type": "string",
+            "title": "Policy Status"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "as_of",
+          "mode",
+          "workflow_counts",
+          "stored_lifecycle_counts",
+          "declared_total_paise",
+          "fdr_matured_from_dates",
+          "fdr_upcoming_90_days",
+          "release_case_counts",
+          "actual_financial_releases",
+          "external_verification",
+          "completed_synthetic_case_time",
+          "policy_revision",
+          "policy_status"
+        ],
+        "title": "SummaryOut"
       },
       "ValidationError": {
         "properties": {

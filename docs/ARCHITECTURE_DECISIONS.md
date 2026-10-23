@@ -1,5 +1,22 @@
 # Architecture decisions
 
+ADR-027: programme/level amounts are in a new immutable-version policy fixture; unknown
+history and aggregate coverage require review. Single-record amount checks do not assert
+that multiple records fulfill an obligation. Legal dates/amendments remain unapproved.
+
+ADR-028: explicit revalidation preserves historical reviews while resetting pending
+release scrutiny/clearances. A release case pins its policy revision; policy drift blocks
+approval/issuance. Issued synthetic outputs stay historical and never imply settlement.
+
+ADR-029: report totals are computed in PostgreSQL over the full authorized scope, not
+the 100-row operational list. Aggregate paise totals are decimal strings for exact client
+transport; per-record amounts remain bounded integer paise. CSV cells escape formula
+prefixes, export is scoped/audited/capped at 10000 rows, search uses bounded keyset paging.
+
+ADR-030: financial-embezzlement holds require a separately scanned EXTERNAL_BODY_NOC
+category and human disposition; ordinary deposit proof cannot lift them. Source authenticity
+remains manual/unconfirmed without an authorized external integration.
+
 ADR-022: local Ollama is optional, synthetic-only, schema constrained and host allowlisted.
 Model values must independently match deterministic page evidence; quote relinking is
 explicit. Proposals are advisory and never change financial or regulatory authority.
