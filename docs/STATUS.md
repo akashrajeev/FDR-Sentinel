@@ -73,3 +73,42 @@ SIMULATED bank-source adapter and degradation/dead-letter controls; extended his
 policy cases, reporting/exports; Phase 4 security/load/restore qualification. The eight
 design documents and provisional-source restrictions remain applicable. This checkpoint
 is a working synthetic lifecycle, not a production certification or authorized integration.
+
+## Phase 2 — completed document intelligence and explicit simulations
+
+Implemented real Tesseract OCR for raster PDFs; varied digital INR/date parsing;
+page/bounds/hash evidence; protected worker-rendered page previews and browser region
+annotations; proposed/independently confirmed extraction corrections; fresh-evaluation
+and discrepancy-disposition acceptance gates; immutable original/decision guards;
+optional local Ollama proposals with strict schema and independent source anchoring;
+signed SIMULATED bank scenarios that cannot set BANK_CONFIRMED; NOT_CONNECTED AICTE
+adapter; five-attempt dead letters with officer retry; database-specific Celery queues;
+scanner/worker/broker degradation and structured request logs. Fixed Nginx DNS re-resolution.
+
+Executed evidence:
+
+* `docker compose --profile test run --rm test`: **45 passed** (13 unit + 32 integration),
+  3 browser tests deselected, 28.68s. Actual PostgreSQL/Keycloak/S3/ClamAV/Tesseract.
+* `.venv\Scripts\python scripts/local.py -m pytest -q -m browser`: **3 passed**,
+  45 deselected, 50.89s. New path uploads a raster scan, invokes real worker OCR/local AI,
+  draws a private evidence region, proposes and independently confirms transcription,
+  reevaluates, and records a prominently SIMULATED mismatch without bank confirmation.
+* Deterministic extraction: **16/16 exact fields on four small synthetic fixtures**,
+  including one raster scan. Local AI smoke: **2/3 fields retained**, one unsupported
+  proposal rejected, original quotes independently relinked. See MEASUREMENTS.md; no
+  real-bank or handwriting accuracy is claimed.
+* TypeScript/Vite and Ruff passed; browser screenshots inspected. Readiness returned
+  ready/available for scanner, broker and recent worker heartbeat with no pending jobs.
+
+Fixed during verification: bounded fixed-field model schema replaced an unstable array
+response; unsupported/poor model output fails closed as advisory-only. UI actions now
+share an in-flight guard to avoid stale-version races between evaluation and simulation.
+An explicit accessible selector label fixed the browser scenario control. A development
+VM/repository metadata clock skew required a bounded build-only APT future-time tolerance;
+package signatures remained enabled. Dependency Starlette/httpx deprecation remains.
+
+Remaining technical milestones: Phase 3 reporting/search/export and broader policy context
+with explicit revalidation; Phase 4 fresh-stack waits, restricted database runtime role,
+resilience/restore/load/security qualification and deployment runbooks. Official amendment
+review, authorized signatories, production identity/MFA/data policies and genuine external
+contracts remain sponsor dependencies. No real release/settlement is implemented or claimed.

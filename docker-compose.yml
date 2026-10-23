@@ -109,12 +109,19 @@ services:
       <<: *app-env
       DATABASE_URL: postgresql+psycopg://sentinel:${POSTGRES_PASSWORD}@postgres:5432/sentinel_test
       TEST_SERVICES: '1'
+      AI_ASSIST_ENABLED: 'false'
       TEST_OIDC_URL: http://keycloak:8080/realms/sentinel/protocol/openid-connect/token
     command: [python, -m, pytest, -q, -p, 'no:cacheprovider', -m, 'not browser']
+  ollama:
+    image: ollama/ollama:0.40.10
+    profiles: [ai]
+    ports: [127.0.0.1:11436:11434]
+    volumes: [ollama-data:/root/.ollama]
 volumes:
   postgres-data:
   redis-data:
   object-data:
   keycloak-data:
   clamav-data:
+  ollama-data:
 

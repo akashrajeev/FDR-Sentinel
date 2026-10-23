@@ -108,6 +108,7 @@ class DocumentOut(StrictModel):
     status: str
     scan_result: str | None
     evidence: list[dict[str, Any]]
+    processing_metadata: dict[str, Any]
 
 
 class EvaluationOut(StrictModel):

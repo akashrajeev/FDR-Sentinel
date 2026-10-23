@@ -9,8 +9,10 @@ from sqlalchemy.orm import Session
 from sentinel.auth import Actor, require_scope
 from sentinel.compliance import POLICY_REVISION, digest, document_set_hash, evaluate, required_amount
 from sentinel.config import settings
+from sentinel.intelligence import effective_documents, register_discrepancies
 from sentinel.models import (
     Deposit,
+    Discrepancy,
     Document,
     Evaluation,
     Institution,
@@ -168,10 +170,12 @@ def correct(db, actor, deposit_id, body, request_id):
 
 def build_inputs(db, deposit):
     obligation = db.get(Obligation, deposit.obligation_id)
+    institution = db.get(Institution, deposit.institution_id)
     return jsonable_encoder({'amount_paise': deposit.amount_paise, 'issue_date': deposit.issue_date,
                              'maturity_date': deposit.maturity_date, 'deposited_on': deposit.deposited_on,
                              'deposit_type': deposit.deposit_type, 'context': obligation.context,
-                             'regulatory_event': obligation.regulatory_event})
+                             'regulatory_event': obligation.regulatory_event,
+                             'institution_external_id': institution.external_id})
 
 
 def run_evaluation(db, actor, deposit_id, body, request_id):
@@ -182,12 +186,14 @@ def run_evaluation(db, actor, deposit_id, body, request_id):
         raise HTTPException(409, 'Incomplete intake: scanned deposit proof required')
     if any(d.status != 'READY' for d in documents):
         raise HTTPException(409, 'All evidence must pass scanning before evaluation')
+    documents = effective_documents(db, documents)
     inputs = build_inputs(db, deposit)
     evaluation = Evaluation(deposit_id=deposit.id, input_revision=deposit.input_revision,
                             policy_revision=POLICY_REVISION, document_set_hash=document_set_hash(documents),
                             inputs=inputs, input_hash=digest(inputs), result=evaluate(inputs, documents))
     db.add(evaluation)
     db.flush()
+    register_discrepancies(db, deposit, evaluation)
     deposit.version += 1
     audit(db, deposit.institution_id, actor.subject, 'COMPLIANCE_EVALUATED', deposit.id,
           {'evaluation_id': evaluation.id, 'outcome': evaluation.result['outcome'],
@@ -198,7 +204,7 @@ def run_evaluation(db, actor, deposit_id, body, request_id):
 def current_evaluation(db, deposit):
     evaluation = db.scalar(select(Evaluation).where(Evaluation.deposit_id == deposit.id).order_by(
         Evaluation.evaluated_at.desc()).limit(1))
-    documents = documents_for(db, deposit)
+    documents = effective_documents(db, documents_for(db, deposit))
     if not evaluation or (evaluation.input_revision, evaluation.policy_revision, evaluation.document_set_hash) != (
             deposit.input_revision, POLICY_REVISION, document_set_hash(documents)):
         raise HTTPException(409, 'Evaluation is missing or stale; reevaluate current evidence')
@@ -227,6 +233,9 @@ def review(db, actor, deposit_id, body, request_id):
             raise HTTPException(409, 'Unresolved substantive blockers prevent acceptance')
         if not body.evidence_reviewed:
             raise HTTPException(409, 'Explicit human evidence review required')
+        if db.scalar(select(Discrepancy.id).where(Discrepancy.deposit_id == deposit.id,
+                                                Discrepancy.status == 'OPEN')):
+            raise HTTPException(409, 'Officer must disposition all discrepancy records before acceptance')
         deposit.workflow = 'ACCEPTED'
         deposit.verification_status = 'MANUALLY_REVIEWED'
     else:

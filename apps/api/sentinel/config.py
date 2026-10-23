@@ -24,6 +24,11 @@ class Settings(BaseSettings):
     max_upload_bytes: int = 10 * 1024 * 1024
     max_pdf_pages: int = 30
     synthetic_mode: bool = True
+    ai_assist_enabled: bool = False
+    ai_base_url: str = 'http://host.docker.internal:11434'
+    ai_model: str = 'qwen2.5:0.5b'
+    mock_attestation_key: str = Field(default='', repr=False)
+    maturity_thresholds: tuple[int, ...] = (90, 30, 7)
 
 
 @lru_cache

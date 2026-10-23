@@ -4,6 +4,7 @@ import type { User } from "oidc-client-ts";
 import { api, download, identity, setToken, type Schemas } from "./api";
 import "./style.css";
 import { ReleaseDesk } from "./ReleaseDesk";
+import { IntelligencePanel } from "./IntelligencePanel";
 
 type Deposit = Schemas["DepositOut"];
 type Detail = Schemas["DepositDetail"];
@@ -990,6 +991,14 @@ function App() {
                     </form>
                   </section>
                 )}
+              <IntelligencePanel
+                record={selected}
+                maker={maker(selected.institution_id)}
+                reviewer={reviewer(selected.institution_id)}
+                subject={me?.subject ?? ""}
+                run={perform}
+                busy={busy}
+              />
               {selected.decisions.length > 0 && (
                 <section className="panel">
                   <h2>Officer decisions</h2>

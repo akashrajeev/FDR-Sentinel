@@ -74,6 +74,13 @@ def test_e1_deficient_scrutiny_return_correction_acceptance(clients):
     assert corrected.status_code == 200
     upload_and_process(maker, deposit, supersedes=original['id'])
     submitted = evaluate_submit(maker, deposit)
+    registry = maker.get(f"/api/v1/deposits/{deposit['id']}/intelligence").json()
+    for discrepancy in registry['discrepancies']:
+        resolved = post(officer, f"/discrepancies/{discrepancy['id']}/resolve", {
+            'reason': 'Corrected declaration and replacement evidence reevaluated; blocker is absent.',
+            'evidence_document_id': next(d['id'] for d in latest(maker, deposit)['documents'] if d['active'])})
+        assert resolved.status_code == 200, resolved.text
+    submitted = latest(maker, deposit)
     result = post(officer, f"/deposits/{deposit['id']}/review", {
         **decision, 'decision': 'ACCEPT_REGISTRATION', 'expected_version': submitted['version']})
     assert result.status_code == 200, result.text

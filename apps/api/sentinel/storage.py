@@ -17,7 +17,11 @@ def storage():
 
 
 def put_original(key: str, data: bytes):
-    storage().put_object(settings().s3_bucket, key, io.BytesIO(data), len(data), content_type='application/pdf')
+    put_blob(key, data, 'application/pdf')
+
+
+def put_blob(key: str, data: bytes, content_type: str):
+    storage().put_object(settings().s3_bucket, key, io.BytesIO(data), len(data), content_type=content_type)
 
 
 def read_original(key: str) -> bytes:
@@ -51,3 +55,10 @@ def scan_bytes(data: bytes) -> str:
     if message == 'stream: OK':
         return 'CLEAN'
     raise RuntimeError('Scanner returned an indeterminate result')
+
+
+def scanner_ping():
+    with socket.create_connection((settings().clamav_host, settings().clamav_port), timeout=1) as connection:
+        connection.settimeout(1)
+        connection.sendall(b'zPING\0')
+        return connection.recv(32).rstrip(b'\0') == b'PONG'

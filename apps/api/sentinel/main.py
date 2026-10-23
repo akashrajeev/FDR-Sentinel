@@ -9,6 +9,7 @@ from fastapi.responses import JSONResponse, Response
 from prometheus_client import CONTENT_TYPE_LATEST, Counter, Histogram, generate_latest
 from redis import Redis
 from sqlalchemy import or_, select, text
+from sqlalchemy.engine import make_url
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -16,6 +17,7 @@ from sentinel import services
 from sentinel.auth import Actor, authenticate, require_scope
 from sentinel.config import settings
 from sentinel.db import get_db
+from sentinel.intelligence_api import router as intelligence_router
 from sentinel.lifecycle_api import router as lifecycle_router
 from sentinel.models import AuditEvent, Deposit, Document, Institution, Obligation, Outbox, ReleaseCase
 from sentinel.schemas import (
@@ -33,13 +35,20 @@ from sentinel.schemas import (
     ReviewIn,
     VersionCommand,
 )
-from sentinel.storage import read_original, storage
+from sentinel.storage import read_original, scanner_ping, storage
 from sentinel.transactions import audit, mutate
 
 app = FastAPI(title='FDR Sentinel', version='0.1.0',
               description='Synthetic regulatory workflow. Registration review is not bank verification or release.')
 app.include_router(lifecycle_router)
+app.include_router(intelligence_router)
 logger = logging.getLogger('sentinel.http')
+logger.setLevel(logging.INFO)
+if not logger.handlers:
+    handler = logging.StreamHandler()
+    handler.setFormatter(logging.Formatter('%(message)s'))
+    logger.addHandler(handler)
+logger.propagate = False
 requests_total = Counter('sentinel_http_requests_total', 'HTTP requests', ['method', 'route', 'status'])
 duration = Histogram('sentinel_http_duration_seconds', 'HTTP request duration', ['route'])
 
@@ -81,14 +90,26 @@ def ready(db: Session = Depends(get_db)):
     except Exception:
         return JSONResponse(status_code=503, content={'status': 'unavailable'})
     processing = 'available'
+    worker = 'unavailable'
     try:
-        Redis.from_url(settings().redis_url, socket_connect_timeout=1, socket_timeout=1).ping()
+        broker = Redis.from_url(settings().redis_url, socket_connect_timeout=1, socket_timeout=1)
+        broker.ping()
+        worker = 'recent_heartbeat' if broker.get('sentinel:heartbeat:' + make_url(
+            settings().database_url).database) else 'stale_or_absent'
+        if worker != 'recent_heartbeat':
+            processing = 'degraded_worker_unavailable'
     except Exception:
         processing = 'degraded_broker_unavailable'
+    try:
+        scanner = 'available' if scanner_ping() else 'unavailable'
+    except Exception:
+        scanner = 'unavailable'
+    if scanner != 'available' and processing == 'available':
+        processing = 'degraded_scanner_unavailable'
     backlog = len(db.scalars(select(Outbox.id).where(Outbox.completed_at.is_(None)).limit(1001)).all())
     return {'status': 'ready' if processing == 'available' else 'degraded_intake_available',
-            'processing': processing, 'pending_jobs_capped': backlog,
-            'note': 'Broker reachability does not certify scanner or worker health'}
+            'processing': processing, 'scanner': scanner, 'worker': worker, 'pending_jobs_capped': backlog,
+            'note': 'Durable intake remains available; only safely processed documents may be read'}
 
 
 @app.get('/metrics', include_in_schema=False)
@@ -210,6 +231,28 @@ def document_content(document_id: str, request: Request, actor: Actor = Depends(
     db.commit()
     return Response(data, media_type='application/pdf',
                     headers={'Content-Disposition': f'attachment; filename="{document.id}.pdf"'})
+
+
+@app.get('/api/v1/documents/{document_id}/preview/{page}')
+def document_preview(document_id: str, page: int, request: Request, actor: Actor = Depends(authenticate),
+                     db: Session = Depends(get_db)):
+    document = db.get(Document, document_id)
+    if not document:
+        raise HTTPException(404, 'Resource not found')
+    services.get_deposit(db, actor, document.deposit_id)
+    expected = document.processing_metadata.get('preview_hashes', {}).get(str(page))
+    if document.status != 'READY' or expected is None:
+        raise HTTPException(409, 'Preview unavailable; first three safely processed pages are supported')
+    try:
+        data = read_original(f'previews/{document.id}/{page}.png')
+        if hashlib.sha256(data).hexdigest() != expected:
+            raise RuntimeError('Preview integrity mismatch')
+    except Exception:
+        raise HTTPException(503, 'Preview unavailable') from None
+    audit(db, document.institution_id, actor.subject, 'DOCUMENT_PREVIEWED', document.deposit_id,
+          {'document_id': document.id, 'page': page}, request.state.request_id)
+    db.commit()
+    return Response(data, media_type='image/png')
 
 
 def command_access(db, actor, deposit_id, roles):

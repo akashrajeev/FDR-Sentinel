@@ -1,0 +1,11 @@
+{
+  "label_version": "independent-synthetic-labels-v1",
+  "date_convention": "Indian DD/MM/YYYY, English short month or ISO; never US MM/DD guessing",
+  "cases": {
+    "digital-a": {"amount_paise": 350000000, "issue_date": "2016-10-01", "maturity_date": "2026-10-01", "institution_external_id": "SYNTHETIC-001"},
+    "digital-b": {"amount_paise": 700000000, "issue_date": "2016-10-02", "maturity_date": "2026-10-02", "institution_external_id": "SYNTHETIC-001"},
+    "scanned": {"amount_paise": 350000000, "issue_date": "2016-10-01", "maturity_date": "2026-10-01", "institution_external_id": "SYNTHETIC-001"},
+    "adversarial": {"amount_paise": 350000000, "issue_date": "2016-10-01", "maturity_date": "2026-10-01", "institution_external_id": "SYNTHETIC-001"}
+  },
+  "limitations": ["Four synthetic printed layouts, one raster scan; not a representative bank corpus", "No measured handwriting accuracy", "No authenticity or financial verification metric"]
+}

@@ -234,6 +234,10 @@ def add_hold(db, actor, case_id, body, request_id):
     if case.state == 'ISSUED_SYNTHETIC':
         raise HTTPException(409, 'Already issued; requires separate incident/revocation process')
     db.add(Hold(case_id=case.id, authority=actor.subject, reason=body.reason))
+    if case.state == 'APPROVED_SYNTHETIC':
+        case.state = 'APPROVAL_REVIEW'
+        case.approver = None
+        case.regulatory_basis = None
     case.version += 1
     db.flush()
     audit(db, case.institution_id, actor.subject, 'RELEASE_HOLD_ADDED', case.id,
@@ -313,6 +317,8 @@ def issue_case(db, actor, case_id, body, request_id):
     case_version(case, body.expected_version, ['APPROVED_SYNTHETIC'])
     gate_approval(db, case)
     deposit = db.get(Deposit, case.deposit_id)
+    if deposit.deposit_type == 'OTHER_LEGACY':
+        raise HTTPException(409, 'Unknown legacy issuance branch requires policy-owner definition')
     bureau = 'APPROVAL_BUREAU' if deposit.deposit_type in ('FDR', 'RPGF') else 'COUNCIL'
     if not actor.allows('ISSUER', 'BUREAU', bureau):
         raise HTTPException(403, 'Type-specific issuer scope required')

@@ -67,6 +67,16 @@ records. Current list endpoints are bounded to 100; large reports need cursor pa
 
 ## Later extended contracts (unimplemented)
 
+Phase 2 adds GET `/deposits/{id}/intelligence`, POST `/documents/{id}/corrections`,
+POST `/corrections/{id}/decision`, POST `/discrepancies/{id}/resolve`,
+POST `/deposits/{id}/verify-simulated`, POST `/documents/{id}/retry`, and scoped GET
+`/documents/{id}/preview/{page}`. Corrections require finite in-page coordinates and
+an independent reviewer; current evaluation must be refreshed after confirmation.
+Substantive discrepancies cannot be waived while still present in the current evaluation.
+Simulation does not change verification authority. Readiness reports queue degradation
+without denying safe durable intake. These are implemented; extended production contracts
+below remain pending qualification.
+
 Versioned obligations/evaluate, verify (SIMULATED/authorized ports), corrections,
 replacement and renewal requests, release-cases/submit, bureau decisions, approve and
 issue-document follow baseline action endpoints. No unconstrained PATCH status.

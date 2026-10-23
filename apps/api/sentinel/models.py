@@ -126,6 +126,7 @@ class Document(Base):
     status: Mapped[str] = mapped_column(String(24), default='QUARANTINED')
     scan_result: Mapped[str | None] = mapped_column(String(160))
     evidence: Mapped[list] = mapped_column(JSON, default=list)
+    processing_metadata: Mapped[dict] = mapped_column(JSON, default=dict)
     uploader: Mapped[str] = mapped_column(ForeignKey('principals.subject'))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
 
@@ -172,6 +173,8 @@ class Outbox(Base):
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
     aggregate_id: Mapped[str] = mapped_column(ForeignKey('documents.id'))
     attempts: Mapped[int] = mapped_column(Integer, default=0)
+    processing_attempts: Mapped[int] = mapped_column(Integer, default=0)
+    dead_lettered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
@@ -266,4 +269,48 @@ class Notification(Base):
     recipient: Mapped[str] = mapped_column(String(128))
     kind: Mapped[str] = mapped_column(String(32))
     detail: Mapped[dict] = mapped_column(JSON)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+
+class ExtractionCorrection(Base):
+    __tablename__ = 'extraction_corrections'
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
+    document_id: Mapped[str] = mapped_column(ForeignKey('documents.id'), index=True)
+    field: Mapped[str] = mapped_column(String(32))
+    value: Mapped[str] = mapped_column(String(120))
+    page: Mapped[int] = mapped_column(Integer)
+    bounds: Mapped[list] = mapped_column(JSON)
+    quote: Mapped[str] = mapped_column(String(240))
+    reason: Mapped[str] = mapped_column(String(2000))
+    maker: Mapped[str] = mapped_column(String(128))
+    status: Mapped[str] = mapped_column(String(20), default='PROPOSED')
+    checker: Mapped[str | None] = mapped_column(String(128))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    decided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class Discrepancy(Base):
+    __tablename__ = 'discrepancies'
+    __table_args__ = (UniqueConstraint('deposit_id', 'finding_key'),)
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
+    deposit_id: Mapped[str] = mapped_column(ForeignKey('deposit_records.id'), index=True)
+    evaluation_id: Mapped[str] = mapped_column(ForeignKey('evaluations.id'))
+    finding_key: Mapped[str] = mapped_column(String(64))
+    finding: Mapped[dict] = mapped_column(JSON)
+    status: Mapped[str] = mapped_column(String(20), default='OPEN')
+    adjudicator: Mapped[str | None] = mapped_column(String(128))
+    resolution: Mapped[str | None] = mapped_column(String(2000))
+    evidence_document_id: Mapped[str | None] = mapped_column(ForeignKey('documents.id'))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+
+class VerificationAttestation(Base):
+    __tablename__ = 'verification_attestations'
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
+    deposit_id: Mapped[str] = mapped_column(ForeignKey('deposit_records.id'), index=True)
+    source: Mapped[str] = mapped_column(String(40))
+    outcome: Mapped[str] = mapped_column(String(40))
+    payload: Mapped[dict] = mapped_column(JSON)
+    signature: Mapped[str] = mapped_column(String(64))
+    requested_by: Mapped[str] = mapped_column(String(128))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)

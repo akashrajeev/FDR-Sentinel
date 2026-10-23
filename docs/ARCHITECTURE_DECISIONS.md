@@ -1,5 +1,27 @@
 # Architecture decisions
 
+ADR-022: local Ollama is optional, synthetic-only, schema constrained and host allowlisted.
+Model values must independently match deterministic page evidence; quote relinking is
+explicit. Proposals are advisory and never change financial or regulatory authority.
+Reference: https://docs.ollama.com/capabilities/structured-outputs .
+
+ADR-023: preserve raw extraction and immutable originals; human corrections are bounded
+page annotations proposed by one actor and confirmed by an independent reviewer. Confirmed
+interpretations enter evaluation snapshots; substantive discrepancies need an explicit
+officer disposition after fresh evaluation no longer contains the blocker.
+
+ADR-024: readiness gates DB/storage while processing degradation separately reports
+broker, recent worker heartbeat and scanner connectivity. Durable intake remains available.
+After five processor failures an event is dead-lettered until scoped officer retry.
+
+ADR-025: Nginx resolves the API service through Docker DNS at runtime, avoiding stale
+upstream addresses after container recreation. Actual gateway smoke caught this issue.
+
+ADR-026: new nonnullable processing metadata/counters retain safe server defaults for
+compatibility with older API/worker instances during migrations. Local authority check
+constraints prohibit BANK_CONFIRMED and RELEASED until authorized integrations and a
+separate production qualification change explicitly introduce those states.
+
 ADR-021 (implementation discovery): local MinIO images are no longer publicly pullable
 from Docker Hub or Quay in this environment. Its official repository is archived. Use
 maintained S3-compatible SeaweedFS 4.48 for local protected object storage, retaining the

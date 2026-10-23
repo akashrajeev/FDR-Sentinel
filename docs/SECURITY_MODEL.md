@@ -38,6 +38,15 @@ interactive decision endpoint credential. Release roles/bureaus are Phase 3.
 
 ## Storage and operational boundaries
 
+Phase 2 enforces typed local-model output and independent source anchoring, with no
+model tools or decision credentials. Original model quote failures are not hidden as
+accurate extraction. Human corrections retain document SHA, page, bounded coordinates,
+transcription, proposer/checker, reason and original extraction. Correction confirmation
+changes input_revision; a fresh evaluation and discrepancy disposition are mandatory.
+Private previews are rendered in the scanned-document worker, hash checked on access
+and scoped through the API. No unscanned PDF parsing occurs in the web request path.
+Failed processing stays quarantined, including after the fifth/dead-letter attempt.
+
 MinIO private bucket without anonymous policy; random keys never returned. Authenticated
 downloads use attachment + nosniff, only READY files. Originals immutable by application
 behavior; production versioning/object-lock and encryption require deployment review.

@@ -3,17 +3,20 @@ import logging
 from datetime import timedelta
 
 from celery import Celery
+from redis import Redis
 from sqlalchemy import or_, select
+from sqlalchemy.engine import make_url
 
 from sentinel.config import settings
 from sentinel.db import session_factory
-from sentinel.document_pipeline import validate_and_extract
+from sentinel.extraction import extract_document, render_previews
 from sentinel.models import Deposit, Document, Outbox, ReleaseCase, now
-from sentinel.storage import read_original, scan_bytes
+from sentinel.storage import put_blob, read_original, scan_bytes
 from sentinel.transactions import audit
 
 celery = Celery('sentinel', broker=settings().redis_url)
 celery.conf.update(
+    task_default_queue='sentinel-' + make_url(settings().database_url).database,
     task_serializer='json', accept_content=['json'], result_serializer='json',
     task_acks_late=True, worker_prefetch_multiplier=1,
     task_time_limit=120, task_soft_time_limit=100, broker_connection_retry_on_startup=True,
@@ -35,10 +38,12 @@ def scheduled_maturity():
 
 @celery.task(name='sentinel.publish_outbox')
 def publish_outbox():
+    Redis.from_url(settings().redis_url, socket_connect_timeout=2, socket_timeout=2).set(
+        'sentinel:heartbeat:' + make_url(settings().database_url).database, now().isoformat(), ex=30)
     # Republish uncompleted events after 5 min to recover a crash after broker acceptance.
     with session_factory()() as db:
         events = db.scalars(select(Outbox).where(
-            Outbox.completed_at.is_(None), or_(Outbox.published_at.is_(None),
+            Outbox.completed_at.is_(None), Outbox.dead_lettered_at.is_(None), or_(Outbox.published_at.is_(None),
                                              Outbox.published_at < now() - timedelta(minutes=5)),
         ).order_by(Outbox.created_at).with_for_update(skip_locked=True).limit(20)).all()
         for event in events:
@@ -53,7 +58,7 @@ def publish_outbox():
 def process_document(self, event_id):
     with session_factory()() as db:
         event = db.get(Outbox, event_id)
-        if not event or event.completed_at:
+        if not event or event.completed_at or event.dead_lettered_at:
             return 'ALREADY_COMPLETED'
         document = db.get(Document, event.aggregate_id)
         # Same lock order as API: deposit -> document -> event.
@@ -62,8 +67,9 @@ def process_document(self, event_id):
                              .execution_options(populate_existing=True))
         event = db.scalar(select(Outbox).where(Outbox.id == event_id).with_for_update()
                           .execution_options(populate_existing=True))
-        if event.completed_at:
+        if event.completed_at or event.dead_lettered_at:
             return 'ALREADY_COMPLETED'
+        event.processing_attempts += 1
         try:
             data = read_original(document.object_key)
             if hashlib.sha256(data).hexdigest() != document.sha256:
@@ -73,7 +79,12 @@ def process_document(self, event_id):
                 document.status = 'REJECTED'
                 document.scan_result = 'ClamAV: INFECTED'
             else:
-                document.evidence = validate_and_extract(data)
+                document.evidence, document.processing_metadata = extract_document(data)
+                preview_hashes = {}
+                for page_number, png in render_previews(data).items():
+                    put_blob(f'previews/{document.id}/{page_number}.png', png, 'image/png')
+                    preview_hashes[str(page_number)] = hashlib.sha256(png).hexdigest()
+                document.processing_metadata = {**document.processing_metadata, 'preview_hashes': preview_hashes}
                 document.status = 'READY'
                 document.scan_result = 'ClamAV INSTREAM: CLEAN'
             event.completed_at = now()
@@ -84,11 +95,18 @@ def process_document(self, event_id):
         except Exception as exc:
             document.status = 'FAILED'
             document.scan_result = 'Processing unavailable; quarantined, retry pending'
+            if event.processing_attempts >= 5:
+                event.dead_lettered_at = now()
+                document.scan_result = 'DEAD_LETTER: processor failed five attempts; officer retry required'
+            document.processing_metadata = {**document.processing_metadata, 'last_failure_type': type(exc).__name__,
+                                             'processing_attempts': event.processing_attempts}
             deposit.version += 1
             audit(db, deposit.institution_id, 'worker', 'DOCUMENT_PROCESSING_FAILED', deposit.id,
                   {'document_id': document.id, 'event_id': event.id}, event.id)
             db.commit()
             logger.warning('document_processing_failed event_id=%s error_type=%s', event_id, type(exc).__name__)
+            if event.dead_lettered_at:
+                return 'DEAD_LETTER'
             raise self.retry(exc=RuntimeError('Document processor unavailable'), countdown=15 * (self.request.retries + 1))
         deposit.version += 1
         if document.release_case_id:

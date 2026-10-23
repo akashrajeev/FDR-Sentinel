@@ -8,13 +8,17 @@ env = root / '.env'
 local = root / '.local'
 local.mkdir(exist_ok=True)
 if env.exists():
-    print('Existing .env retained. Remove explicitly only when resetting the entire local stack.')
+    content = env.read_text(encoding='utf-8')
+    if 'MOCK_ATTESTATION_KEY=' not in content:
+        with env.open('a', encoding='utf-8') as stream:
+            stream.write('\nMOCK_ATTESTATION_KEY=' + secrets.token_hex(32) + '\n')
+    print('Existing credentials/realm retained; missing local demo-adapter key added if necessary.')
     raise SystemExit(0)
 
 names = ['institution', 'other-institution', 'reviewer', 'pgrc', 'vigilance', 'approver', 'issuer', 'auditor']
 subjects = {name: f'10000000-0000-0000-0000-{index:012d}' for index, name in enumerate(names, 1)}
 values = {key: secrets.token_hex(24) for key in (
-    'POSTGRES_PASSWORD', 'S3_SECRET_KEY', 'REFERENCE_HMAC_KEY', 'KEYCLOAK_ADMIN_PASSWORD')}
+    'POSTGRES_PASSWORD', 'S3_SECRET_KEY', 'REFERENCE_HMAC_KEY', 'KEYCLOAK_ADMIN_PASSWORD', 'MOCK_ATTESTATION_KEY')}
 values['S3_ACCESS_KEY'] = 'sentinel-' + secrets.token_hex(6)
 values.update({f'DEMO_{name.upper().replace("-", "_")}_PASSWORD': secrets.token_urlsafe(18) for name in names})
 env.write_text('\n'.join(f'{key}={value}' for key, value in values.items()) + '\n', encoding='utf-8')

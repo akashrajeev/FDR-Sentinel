@@ -65,3 +65,14 @@ export async function download(id: string) {
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
+
+export async function previewUrl(id: string, page: number) {
+  const response = await fetch(`/api/v1/documents/${id}/preview/${page}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!response.ok)
+    throw new Error(
+      "Preview unavailable for this processed document; download the original.",
+    );
+  return URL.createObjectURL(await response.blob());
+}

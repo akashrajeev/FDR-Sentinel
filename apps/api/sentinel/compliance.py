@@ -51,9 +51,12 @@ def evaluate(inputs: dict, documents: list) -> dict:
                                  'asserted': inputs[field], 'observed': evidence['value'],
                                  'evidence': {'document_id': doc.id, 'sha256': doc.sha256, **evidence},
                                  'citation': 'Product evidence consistency control, not statutory authenticity'})
-    if not any(d.evidence for d in documents):
+    required_fields = {'amount_paise', 'issue_date', 'maturity_date'} if inputs['deposit_type'] == 'FDR' else {'amount_paise'}
+    extracted = {e['field'] for d in documents for e in d.evidence}
+    if required_fields - extracted:
         findings.append({'code': 'EXTRACTION_UNAVAILABLE', 'severity': 'REVIEW',
-                         'message': 'No supported digital fields; explicit human evidence review required'})
+                         'message': 'Some supported fields unavailable; explicit human evidence review required',
+                         'missing_fields': sorted(required_fields - extracted)})
     findings.append({'code': 'PROVISIONAL_POLICY', 'severity': 'REVIEW',
                      'message': 'Source amendments and legal effectivity need policy-owner validation',
                      'citation': POLICY['source_url']})

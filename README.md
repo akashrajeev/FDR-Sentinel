@@ -72,5 +72,30 @@ independent approval and type-specific synthetic issuance. Only synthetic NOC/sa
 outputs are generated; they carry no financial authority and do not mark settlement.
 The same tab provides maturity monitoring and authorized replacement/renewal lineage.
 
+## Documents and optional local AI
+
+The worker scans with ClamAV, extracts digital PDF fields and runs real Tesseract OCR
+for scanned pages. The portal provides protected page previews, bounded evidence
+annotations, independently confirmed transcription corrections and discrepancy disposition.
+Generate realistic samples with `python scripts/generate_fixtures.py` in the installed
+environment; all resulting PDFs are visibly synthetic and stored under ignored `.local/`.
+See [executed measurements](docs/MEASUREMENTS.md) for the tiny corpus and limitations.
+
+Optional local Ollama: set `AI_ASSIST_ENABLED=true` and `AI_BASE_URL` in ignored `.env`,
+pull `qwen2.5:0.5b`, then recreate API/worker. Docker Desktop can reach an installed host
+server at `http://host.docker.internal:11434` (verified here). Alternatively use the
+Compose `ai` profile and `AI_BASE_URL=http://ollama:11434`; the model service is optional
+because its image is large. No external AI vendor is configured. Proposals are strictly
+advisory; source text and human confirmation govern their use.
+
+The local bank adapter is prominently SIMULATED. Its MATCH scenario echoes declarations
+and its HMAC is a local demo signature, not bank PKI. It never sets BANK_CONFIRMED.
+The AICTE adapter reports NOT_CONNECTED. Genuine integrations remain authorization-gated.
+
+If a development Docker VM clock lags signed Debian repository metadata, this session
+needed `docker compose build --build-arg APT_MAX_FUTURE_SECONDS=7200 api`. Default builds
+retain strict 10-second tolerance. Package signatures/expiry checks stay enabled; fix
+host/VM time synchronization before any production qualification.
+
 Never run destructive volume resets on any environment with needed data. For local
 restarts use `docker compose stop` / `docker compose up -d`; named volumes retain records.

@@ -244,6 +244,108 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/documents/{document_id}/corrections": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Propose */
+    post: operations["propose_api_v1_documents__document_id__corrections_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/deposits/{deposit_id}/intelligence": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Intelligence Detail */
+    get: operations["intelligence_detail_api_v1_deposits__deposit_id__intelligence_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/corrections/{correction_id}/decision": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Decide */
+    post: operations["decide_api_v1_corrections__correction_id__decision_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/discrepancies/{discrepancy_id}/resolve": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Resolve */
+    post: operations["resolve_api_v1_discrepancies__discrepancy_id__resolve_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/deposits/{deposit_id}/verify-simulated": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Verify */
+    post: operations["verify_api_v1_deposits__deposit_id__verify_simulated_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/documents/{document_id}/retry": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Retry */
+    post: operations["retry_api_v1_documents__document_id__retry_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/health/live": {
     parameters: {
       query?: never;
@@ -409,6 +511,23 @@ export interface paths {
     };
     /** Document Content */
     get: operations["document_content_api_v1_documents__document_id__content_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/documents/{document_id}/preview/{page}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Document Preview */
+    get: operations["document_preview_api_v1_documents__document_id__preview__page__get"];
     put?: never;
     post?: never;
     delete?: never;
@@ -610,6 +729,38 @@ export interface components {
       /** Expected Version */
       expected_version: number;
     };
+    /** CorrectionDecision */
+    CorrectionDecision: {
+      /**
+       * Decision
+       * @enum {string}
+       */
+      decision: "CONFIRMED" | "REJECTED";
+      /** Reason */
+      reason: string;
+    };
+    /** CorrectionProposal */
+    CorrectionProposal: {
+      /**
+       * Field
+       * @enum {string}
+       */
+      field:
+        | "amount_paise"
+        | "issue_date"
+        | "maturity_date"
+        | "institution_external_id";
+      /** Value */
+      value: string;
+      /** Page */
+      page: number;
+      /** Bounds */
+      bounds: [number, number, number, number];
+      /** Quote */
+      quote: string;
+      /** Reason */
+      reason: string;
+    };
     /** DepositDetail */
     DepositDetail: {
       /** Amount Paise */
@@ -716,6 +867,13 @@ export interface components {
        */
       created_at: string;
     };
+    /** DiscrepancyResolution */
+    DiscrepancyResolution: {
+      /** Reason */
+      reason: string;
+      /** Evidence Document Id */
+      evidence_document_id: string;
+    };
     /** DocumentOut */
     DocumentOut: {
       /** Id */
@@ -740,6 +898,10 @@ export interface components {
       evidence: {
         [key: string]: unknown;
       }[];
+      /** Processing Metadata */
+      processing_metadata: {
+        [key: string]: unknown;
+      };
     };
     /** EvaluationOut */
     EvaluationOut: {
@@ -951,6 +1113,16 @@ export interface components {
        * @default false
        */
       evidence_reviewed: boolean;
+    };
+    /** SimulationIn */
+    SimulationIn: {
+      /** Expected Version */
+      expected_version: number;
+      /**
+       * Scenario
+       * @enum {string}
+       */
+      scenario: "MATCH" | "AMOUNT_MISMATCH" | "UNAVAILABLE";
     };
     /** ValidationError */
     ValidationError: {
@@ -1510,6 +1682,222 @@ export interface operations {
       };
     };
   };
+  propose_api_v1_documents__document_id__corrections_post: {
+    parameters: {
+      query?: never;
+      header?: {
+        "idempotency-key"?: string | null;
+      };
+      path: {
+        document_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["CorrectionProposal"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": unknown;
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  intelligence_detail_api_v1_deposits__deposit_id__intelligence_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        deposit_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": unknown;
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  decide_api_v1_corrections__correction_id__decision_post: {
+    parameters: {
+      query?: never;
+      header?: {
+        "idempotency-key"?: string | null;
+      };
+      path: {
+        correction_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["CorrectionDecision"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": unknown;
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  resolve_api_v1_discrepancies__discrepancy_id__resolve_post: {
+    parameters: {
+      query?: never;
+      header?: {
+        "idempotency-key"?: string | null;
+      };
+      path: {
+        discrepancy_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["DiscrepancyResolution"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": unknown;
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  verify_api_v1_deposits__deposit_id__verify_simulated_post: {
+    parameters: {
+      query?: never;
+      header?: {
+        "idempotency-key"?: string | null;
+      };
+      path: {
+        deposit_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["SimulationIn"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": unknown;
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  retry_api_v1_documents__document_id__retry_post: {
+    parameters: {
+      query?: never;
+      header?: {
+        "idempotency-key"?: string | null;
+      };
+      path: {
+        document_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["VersionCommand"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": unknown;
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
   live_api_v1_health_live_get: {
     parameters: {
       query?: never;
@@ -1851,6 +2239,38 @@ export interface operations {
       header?: never;
       path: {
         document_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": unknown;
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  document_preview_api_v1_documents__document_id__preview__page__get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        document_id: string;
+        page: number;
       };
       cookie?: never;
     };
