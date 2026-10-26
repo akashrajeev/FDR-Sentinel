@@ -135,6 +135,7 @@ export function IntegrationPanel({
           <label className="field">
             <span>Sandbox transport behavior</span>
             <select
+              aria-label="Sandbox transport behavior"
               value={behavior}
               onChange={(e) => setBehavior(e.target.value)}
             >

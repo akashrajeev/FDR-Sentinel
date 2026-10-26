@@ -20,10 +20,11 @@ Open http://localhost:8088. Identity provider: http://localhost:8081. Initial an
 definitions and image pulls can take several minutes. Files stay quarantined until the
 real scanner succeeds. Credentials are randomly generated in ignored `.env` (never commit
 or share it). Users: `institution`, `other-institution`, `reviewer`, `pgrc`, `vigilance`,
-`approver`, `issuer`, `auditor`. Match user to `DEMO_<USER>_PASSWORD` in `.env`.
+`approver`, `issuer`, `auditor`, `operator`. Match user to `DEMO_<USER>_PASSWORD` in `.env`
+(replace hyphens in the username with underscores).
 `institution` owns the synthetic seeded institution; other accounts have explicit scopes.
-Onboarding a new institution does not automatically assign reviewers; use the operator
-provisioning command described below when developing new scoped scenarios.
+Onboarding a new institution does not automatically assign reviewers; sign in as operator
+and use its audited scope-assignment workspace. The provisioning CLI remains available.
 
 All dependency ports bind loopback; do not expose this development stack publicly.
 PostgreSQL :55432, Redis :56379, private S3 :59000, ClamAV :53310. Object storage uses
@@ -98,9 +99,30 @@ Compose `ai` profile and `AI_BASE_URL=http://ollama:11434`; the model service is
 because its image is large. No external AI vendor is configured. Proposals are strictly
 advisory; source text and human confirmation govern their use.
 
-The local bank adapter is prominently SIMULATED. Its MATCH scenario echoes declarations
-and its HMAC is a local demo signature, not bank PKI. It never sets BANK_CONFIRMED.
-The AICTE adapter reports NOT_CONNECTED. Genuine integrations remain authorization-gated.
+The connected bank/AICTE sandbox is a real HTTP API with an independent persistent
+fictional ledger/registry, separate database permissions, authenticated signed exchanges,
+pending/retry/dead-letter states, and issuer-triggered reconciliation after human issuance.
+It never sets BANK_CONFIRMED or RELEASED. The old echo-only fixture endpoint is retained
+for historical regression compatibility; its interactive UI controls have been removed.
+Genuine external integrations remain authorization-gated.
+
+Use [SIH demo runbook](docs/SIH_DEMO_RUNBOOK.md) and [acceptance map](docs/SIH_ACCEPTANCE.md).
+Sandbox API: http://localhost:8092/docs. Real SMTP test inbox: http://localhost:8025
+(SMTP localhost:11025); all recipients are fictional `.invalid` addresses and no relay
+to real recipients is configured. The source fixture admin key is separate from the
+portal client key and is not supplied to its runtime. Local protocol assumptions and
+verified fields are explicit in API_CONTRACTS.md.
+
+Legacy import previews and atomically commits validated CSV as DRAFT records. The
+operator workspace assigns/revokes scoped officers with reasons and bounded validity;
+operator status itself cannot make financial decisions or access evidence.
+
+Clean-start qualification: `.venv\Scripts\python scripts/fresh_acceptance.py` creates a
+clean source export, new credentials and isolated fresh volumes, builds the service images,
+runs actual backend network tests and stops only that generated project. Supply a recent
+`--snapshot YYYYMMDDTHHMMSSZ` only for the documented signed-metadata clock workaround.
+The live demo data is retained. The script does not claim a hosted CI run or cold-stack
+browser run; the browser suite independently tests the live portal.
 
 If a development Docker VM clock lags signed Debian repository metadata, this session
 needed `docker compose build --build-arg APT_MAX_FUTURE_SECONDS=7200 api`. Default builds
@@ -128,7 +150,8 @@ Docker includes Tesseract and is the canonical full backend test runner. Native 
 OCR tests need Tesseract on PATH. Test mode disables optional AI; the connected model
 has a separate smoke test. Browser CI is configured; no remote CI run is claimed.
 
-The current base uses Debian Trixie with pip 26.2.2. For metadata signed ahead of the VM
+The current base uses Debian Trixie and build-installer pip 26.2.2; the final runtime
+excludes pip/ensurepip. For metadata signed ahead of the VM
 clock, this session used `docker compose build --build-arg DEBIAN_SNAPSHOT=20261022T000000Z api`.
 APT fails on any repository error and keeps signature/expiry checks enabled. Refresh
 snapshot dates deliberately and fix time synchronization before production qualification.

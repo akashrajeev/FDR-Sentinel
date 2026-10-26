@@ -44,10 +44,19 @@ function Field({
   label: string;
   children: React.ReactNode;
 }) {
+  const control = React.isValidElement(children)
+    ? React.cloneElement(
+        children as React.ReactElement<Record<string, unknown>>,
+        {
+          "aria-label":
+            (children.props as Record<string, unknown>)["aria-label"] ?? label,
+        },
+      )
+    : children;
   return (
     <label className="field">
       <span>{label}</span>
-      {children}
+      {control}
     </label>
   );
 }
@@ -174,6 +183,14 @@ function App() {
         : "Action recorded with audit evidence.",
     );
 
+  const evidenceReady =
+    !!selected &&
+    selected.documents.some(
+      (d) => d.active && d.category === "DEPOSIT_PROOF",
+    ) &&
+    selected.documents
+      .filter((d) => d.active)
+      .every((d) => d.status === "READY");
   if (!authReady)
     return <div className="splash">Preparing secure workspace…</div>;
   if (!user)
@@ -252,6 +269,8 @@ function App() {
               setTab(name);
               setSelected(null);
               setForm("");
+              setNotice("");
+              setError("");
             }}
           >
             <span>{["◫", "▤", "⌂", "⇄", "▥", "◷"][i]}</span>
@@ -265,6 +284,8 @@ function App() {
               setTab("Legacy import");
               setSelected(null);
               setForm("");
+              setNotice("");
+              setError("");
             }}
           >
             ⇧ Legacy import
@@ -277,6 +298,8 @@ function App() {
               setTab("Operator");
               setSelected(null);
               setForm("");
+              setNotice("");
+              setError("");
             }}
           >
             ⚙ Operator
@@ -563,7 +586,7 @@ function App() {
                 <Field label="Bank code">
                   <input
                     name="bank_code"
-                    defaultValue="DEMO-BANK"
+                    defaultValue="SYN-BANK"
                     required
                     pattern="[A-Z0-9-]{3,32}"
                   />
@@ -941,7 +964,7 @@ function App() {
                     reviewer(selected.institution_id)) &&
                     selected.workflow !== "ACCEPTED" && (
                       <button
-                        disabled={busy}
+                        disabled={busy || !evidenceReady}
                         onClick={() => command("evaluate")}
                       >
                         Run current evaluation
@@ -968,7 +991,9 @@ function App() {
                   {maker(selected.institution_id) &&
                     selected.workflow === "DRAFT" && (
                       <button
-                        disabled={busy}
+                        disabled={
+                          busy || !evidenceReady || !selected.evaluation_fresh
+                        }
                         className="primary"
                         onClick={() => command("submit")}
                       >

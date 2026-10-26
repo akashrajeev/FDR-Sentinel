@@ -72,7 +72,7 @@ export function Reports() {
               <div>
                 <span>Actual financial releases</span>
                 <strong>0</strong>
-                <small>External banks / AICTE not connected</small>
+                <small>No official bank / AICTE financial authority</small>
               </div>
             </div>
             <div className="report-bars">

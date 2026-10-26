@@ -27,9 +27,11 @@ def main():
     with engine().connect().execution_options(isolation_level='REPEATABLE READ') as connection:
         with connection.begin():
             snapshot = connection.scalar(text('SELECT pg_export_snapshot()'))
-            tables = sorted(inspect(connection).get_table_names())
+            tables = [(schema, name) for schema in ('public', 'sandbox')
+                      for name in sorted(inspect(connection).get_table_names(schema=schema))]
             quote = connection.dialect.identifier_preparer.quote
-            counts = {name: connection.scalar(text(f'SELECT count(*) FROM {quote(name)}')) for name in tables}
+            counts = {f'{schema}.{name}': connection.scalar(text(f'SELECT count(*) FROM {quote(schema)}.{quote(name)}'))
+                      for schema, name in tables}
             objects = connection.execute(text('SELECT id, object_key, sha256, processing_metadata FROM documents')).all()
             dump = subprocess.run(['docker', 'compose', 'exec', '-T', 'postgres', 'pg_dump', '-U', 'sentinel',
                                    '-d', source.database, '--snapshot', snapshot, '-Fc'],
@@ -44,7 +46,8 @@ def main():
     target = create_engine(source.set(database=destination))
     with target.connect() as connection:
         quote = connection.dialect.identifier_preparer.quote
-        restored_counts = {name: connection.scalar(text(f'SELECT count(*) FROM {quote(name)}')) for name in tables}
+        restored_counts = {f'{schema}.{name}': connection.scalar(text(f'SELECT count(*) FROM {quote(schema)}.{quote(name)}'))
+                           for schema, name in tables}
         assert counts == restored_counts, 'Snapshot row counts differ after restore'
         assert connection.scalar(text('SELECT version_num FROM alembic_version'))
     storage().make_bucket(restored_bucket)
@@ -68,7 +71,8 @@ def main():
     report = {'mode': 'LOCAL_SYNTHETIC_RESTORE_DRILL', 'source_database': source.database,
               'restored_database': destination, 'restored_private_bucket': restored_bucket,
               'tables_verified': len(tables), 'rows_verified': sum(counts.values()),
-              'audit_rows_verified': counts.get('audit_events'), 'object_hashes_verified': object_count,
+              'audit_rows_verified': counts.get('public.audit_events'), 'object_hashes_verified': object_count,
+              'schemas_verified': ['public', 'sandbox'],
               'database_dump_sha256': hashlib.sha256(dump).hexdigest(),
               'elapsed_seconds': round((datetime.now(timezone.utc) - started).total_seconds(), 2),
               'source_untouched': True, 'limits': 'Local snapshot restore; no production PITR/RPO/RTO or encrypted off-site backup qualification'}

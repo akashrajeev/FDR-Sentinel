@@ -1,4 +1,4 @@
-"""Explicit external-source ports. Only a signed, synthetic fixture adapter is enabled."""
+"""Legacy fixture/future authorized ports; live local source APIs use integrations.py."""
 import hashlib
 import hmac
 import json

@@ -1,5 +1,18 @@
 # Test strategy
 
+SIH completion adds actual HTTP exchanges against a separately persisted sandbox and
+actual SMTP plus Mailpit mailbox-content assertions. Adverse cases include source
+signature/correlation, missing/mismatched data, HTTP 503, delayed result, stale declaration,
+cross-scope/operator denial, CSV rollback/replay and refused SMTP through dead letter and
+recovery. Backend network tests run both against the normal stack and a clean source
+export with fresh isolated credentials/volumes. No SQLite substitutes core PostgreSQL.
+
+Browser coverage includes new onboarding → registry → operator assignment → CSV intake;
+clock/reminder → actual email → independent renewal; and underfunded scrutiny → denied
+acceptance → return → correction/superseded evidence → fresh evaluation/disposition →
+acceptance. Source receipt/reconciliation follows human issuance in the browser. Old
+echo-only fixture controls are excluded from the presentation UI. See SIH_ACCEPTANCE.md.
+
 Tests must report actual commands, counts and dependency versions in STATUS.md. A mock
 unit test is never evidence that object storage, Keycloak, Redis or PostgreSQL actually connected.
 

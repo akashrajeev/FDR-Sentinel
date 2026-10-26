@@ -170,7 +170,7 @@ def monitor(body: ClockCommand, request: Request, actor: Actor = Depends(authent
 
 
 @router.get('/notifications')
-def notifications(actor: Actor = Depends(authenticate), db: Session = Depends(get_db)):
+def notifications(deposit_id: str | None = None, actor: Actor = Depends(authenticate), db: Session = Depends(get_db)):
     def delivery(notification):
         row = db.scalar(select(NotificationDelivery).where(NotificationDelivery.notification_id == notification.id))
         return {'id': row.id, 'state': row.state, 'attempts': row.attempts, 'last_error': row.last_error,
@@ -179,7 +179,8 @@ def notifications(actor: Actor = Depends(authenticate), db: Session = Depends(ge
              'delivery': delivery(n),
              'created_at': n.created_at.isoformat()}
             for n in db.scalars(select(Notification).where(Notification.institution_id.in_(
-                actor.institution_ids())).order_by(Notification.created_at.desc()).limit(100))]
+                actor.institution_ids()), *([Notification.deposit_id == deposit_id] if deposit_id else []))
+                .order_by(Notification.created_at.desc()).limit(100))]
 
 
 @router.post('/notifications/{notification_id}/retry')

@@ -1,5 +1,12 @@
 # Requirements and evidence matrix
 
+SIH completion scope now includes real independent bank/AICTE sandbox APIs and persistent
+request/response processing (R06/R09/D9/D10), issuer reconciliation after human issuance
+(R07/D7), real local SMTP retries/mailbox evidence (R13/D4/D10), technical operator scope
+assignment and validated atomic CSV intake (R06/R08/R12). These are implementation tasks,
+not external-authority blockers. SIH_ACCEPTANCE.md maps the expanded browser/API evidence;
+STATUS.md records exact runs. No genuine integration or financial authority is implied.
+
 ## Implemented local evidence map
 
 | Coverage | Code/test anchors | Boundary |

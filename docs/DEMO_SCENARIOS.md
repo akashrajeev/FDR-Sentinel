@@ -1,8 +1,17 @@
 # Demo scenarios
 
-All identities, institutions, FDRs and PDFs are synthetic. No bank verification, AICTE
-registry connection, legal approval or money movement is claimed. Issued sample
+All identities, institutions, FDRs and PDFs are synthetic. The implemented independent
+bank/AICTE sandbox APIs use persistent fictional ledgers and registry records. No real
+bank verification, official AICTE registry connection, legal approval or money movement
+is claimed. Issued sample
 NOC/sanction PDFs are visibly synthetic and carry no authority.
+
+The current complete judging sequence, including operator assignment, CSV intake,
+actual SMTP delivery, source checks and sandbox release reconciliation, is in
+`SIH_DEMO_RUNBOOK.md`. D1–D10 evidence is mapped in `SIH_ACCEPTANCE.md`; `STATUS.md`
+records actual executed results. The older scenarios below retain milestone context;
+their SIMULATED echo checks are historical regression fixtures, not the current live
+source API demonstration.
 
 ## First complete slice
 

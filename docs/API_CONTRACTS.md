@@ -1,5 +1,40 @@
 # API contracts
 
+## Connected SIH sandbox, operator and delivery extensions
+
+All portal routes below use the same OIDC/scoped authorization and mutation idempotency
+as the core. Sandbox states never become BANK_CONFIRMED or RELEASED.
+
+| Route | Contract |
+|---|---|
+| GET `/sandbox/catalogue` | Authenticated read of published fictional source examples, through real sandbox HTTP |
+| POST `/institutions/{id}/registry-check` | Maker/reviewer; queue registry lookup; optional NORMAL/DELAYED/TRANSIENT_FAILURE transport behavior |
+| POST `/deposits/{id}/bank-check` | Reviewer; expected_version, independent ledger_id, behavior; immutable declaration snapshot and durable request |
+| GET `/integration-requests?institution_id=&deposit_id=&case_id=` | Scoped progress, attempts, source result and remote correlation |
+| POST `/integration-requests/{id}/retry` | Reviewer/issuer; dead-letter attempt count in expected_version; retains request identity |
+| POST `/release-cases/{id}/sandbox-exchange` | Recorded human issuer, ISSUED_SYNTHETIC, fresh clearance/hold gates; no ledger_id sends case receipt; ledger_id requests bank sandbox reconciliation |
+| GET `/operator/workspace` | Technical operator metadata and scope assignments; no financial/document authority |
+| POST `/operator/assignments` | Operator, target principal, role, institution/case/bureau, validity <=90 days and reason; self/operator-role grants prohibited; DB-atomic audit |
+| GET `/legacy-import/template` | Authenticated UTF-8 CSV header template |
+| POST `/legacy-import/preview` | Maker multipart CSV <=200 KiB/200 rows; strict schema, scope, dates, duplicates; SHA256/count/total, no writes |
+| POST `/legacy-import/commit` | Same CSV + expected_sha256 and Idempotency-Key; atomic DRAFT-only intake |
+| GET `/notifications?deposit_id=` | Scoped persisted alerts and actual SMTP delivery attempts/status |
+| POST `/notifications/{id}/retry` | Reviewer, dead-letter attempt count as expected_version; no approval side effects |
+
+Independent source service at localhost:8092 has `/health`, authenticated
+`GET /v1/catalogue`, `POST /v1/requests`, `GET /v1/requests/{id}` and separately
+admin-authenticated immutable `/v1/fixtures/registry` and `/v1/fixtures/ledger`.
+This is an assumed local protocol, not an official bank/AICTE API specification.
+Normal portal credentials cannot write source fixtures. The source database role
+cannot read core tables; the core runtime cannot read the sandbox schema.
+
+Responses carry HMAC-authenticated source/protocol, timestamp, request fingerprint,
+client correlation and remote identity. Polling is implemented; no fake callback
+completion or genuine bank PKI is claimed. Late results become STALE after declaration
+changes. Pending, stale, failed and conflicting initiated checks block acceptance/issuance;
+successful checks do not replace a human decision. Reconciliation never changes actual
+financial-release state. SMTP acceptance is a transport result, not proof of reading.
+
 Base `/api/v1`. Runtime OpenAPI `/openapi.json` is exported to `openapi/` and used to
 generate the frontend schema types. JSON dates ISO 8601; money `amount_paise` integer.
 OIDC access token in Authorization Bearer; server never issues identity tokens.

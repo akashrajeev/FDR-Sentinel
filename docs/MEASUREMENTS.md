@@ -3,6 +3,23 @@
 These are small synthetic test measurements, not estimates of regulatory impact or
 bank verification accuracy. No manual-process baseline has been measured.
 
+## Final SIH acceptance (2026-10-26)
+
+The final combined browser run passed **8 tests in 154.91s**. A separate clean source
+deployment with fresh credentials and isolated persistent volumes passed **80 backend
+tests in 65.85s**, readiness, and startup in **231.53s total**. This measures this local
+Docker environment and synthetic fixtures, not production throughput or human review
+time. Exact commands, source-export hash and limitations are in `STATUS.md`.
+
+The latest real Ollama smoke retained **2/3 correct fields**, rejected one unsupported
+proposal and took **8.99s**. Zero original model quotes validated; both retained fields
+were independently linked to source text. This repeats the limited result below rather
+than demonstrating improved extraction accuracy.
+
+The latest local snapshot restore verified both public/sandbox schemas: **25 tables,
+1,679 rows, 719 audit rows and 160 object hashes in 10.26s**, source untouched. This is
+a synthetic local recovery drill, not a production RPO/RTO/PITR commitment.
+
 ## Document extraction (2026-10-23)
 
 Command: `docker compose run --rm -T --no-deps api python scripts/benchmark_extraction.py`.

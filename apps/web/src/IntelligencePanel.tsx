@@ -468,40 +468,12 @@ export function IntelligencePanel({
           )}
         </div>
       ))}
-      <div className="policy-note">
-        <h3>SIMULATED bank adapter</h3>
+      <details className="policy-note">
+        <summary>Historical local fixture attestations</summary>
         <p>
-          This adapter generates signed local demonstration fixtures. MATCH
-          echoes the declared values. It is not independent bank verification
-          and never changes the bank-authenticity status.
+          These older fixture records are retained for audit. New verification
+          uses the independently persisted connected sandbox above.
         </p>
-        {reviewer && (
-          <form
-            className="form-grid"
-            onSubmit={(e) => {
-              e.preventDefault();
-              const v = val(e.currentTarget);
-              run(
-                () =>
-                  api(`/deposits/${record.id}/verify-simulated`, {
-                    expected_version: record.version,
-                    scenario: v.scenario,
-                  }),
-                "SIMULATED bank fixture recorded. No bank confirmation occurred.",
-              );
-            }}
-          >
-            <label className="field">
-              <span>Simulated bank scenario</span>
-              <select name="scenario" aria-label="Simulated bank scenario">
-                <option>MATCH</option>
-                <option>AMOUNT_MISMATCH</option>
-                <option>UNAVAILABLE</option>
-              </select>
-            </label>
-            <button disabled={busy}>Run SIMULATED bank scenario</button>
-          </form>
-        )}
         {intel.attestations.map((a) => (
           <div className="document" key={a.id}>
             <strong>{a.outcome}</strong>
@@ -512,7 +484,7 @@ export function IntelligencePanel({
             </pre>
           </div>
         ))}
-      </div>
+      </details>
     </section>
   );
 }

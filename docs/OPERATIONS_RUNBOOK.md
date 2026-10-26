@@ -1,5 +1,17 @@
 # Local operation and production activation
 
+For current SIH presentation flows use SIH_DEMO_RUNBOOK.md and SIH_ACCEPTANCE.md. The
+independent sandbox now listens on localhost:8092 (separate fixture-admin credential),
+and actual SMTP is captured on localhost:11025 / inbox localhost:8025. Neither is an
+authorized external integration. Operator UI replaces routine CLI-only scope assignment;
+CSV preview/commit remains DRAFT and all human review/clearance gates still apply.
+
+`scripts/fresh_acceptance.py` performs a clean source export with new credentials,
+isolated images/network/fresh volumes and no host ports. It runs backend network tests,
+checks readiness and stops only its generated project, retaining manifests/logs/data in
+ignored `.local`. It does not reset the live stack. Do not interpret its backend pass as
+a cold-stack browser or hosted CI result; those checks have separate evidence.
+
 This runbook operates the synthetic local system. STATUS.md records executed results.
 No command below grants real bank, AICTE or financial authority.
 

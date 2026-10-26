@@ -67,7 +67,7 @@ export function OperatorPanel() {
           >
             <label className="field">
               <span>Officer principal</span>
-              <select name="subject" required>
+              <select name="subject" aria-label="Officer principal" required>
                 {workspace.principals
                   .filter((p) => p.enabled)
                   .map((p) => (
@@ -79,7 +79,7 @@ export function OperatorPanel() {
             </label>
             <label className="field">
               <span>Assigned role</span>
-              <select name="role">
+              <select name="role" aria-label="Assigned role">
                 <option>REVIEWER</option>
                 <option>AUDITOR</option>
                 <option>CLEARANCE</option>
@@ -91,6 +91,7 @@ export function OperatorPanel() {
               <span>Scope type</span>
               <select
                 name="scope_type"
+                aria-label="Scope type"
                 value={scopeType}
                 onChange={(e) => setScopeType(e.target.value)}
               >
@@ -102,7 +103,7 @@ export function OperatorPanel() {
             <label className="field">
               <span>Assigned scope</span>
               {scopeType === "INSTITUTION" ? (
-                <select name="scope_id" required>
+                <select name="scope_id" aria-label="Assigned scope" required>
                   {workspace.institutions.map((i) => (
                     <option key={i.id} value={i.id}>
                       {i.legal_name} · {i.external_id}
@@ -110,7 +111,7 @@ export function OperatorPanel() {
                   ))}
                 </select>
               ) : scopeType === "BUREAU" ? (
-                <select name="scope_id">
+                <select name="scope_id" aria-label="Assigned scope">
                   <option>PGRC</option>
                   <option>VIGILANCE</option>
                   <option>GRANTS</option>

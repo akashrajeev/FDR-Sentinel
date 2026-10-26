@@ -1,5 +1,31 @@
 # Database design
 
+## SIH completion additions
+
+`integration_requests` persists source operation, immutable declaration/policy context,
+input revision, initiator, W3C context, remote correlation, attempts/next time, result and
+signature. Pending work commits with its audit before network processing. A trigger
+protects request identity and terminal evidence. Processor no-autoflush ensures sealing
+the result and completion metadata in one transaction. Signed response validation is
+separate from source authenticity: this source is explicitly a synthetic sandbox.
+
+`notification_deliveries` has one row per notification, stable Message-ID, PENDING/SENT/
+DEAD_LETTER, attempts/next time/error and SMTP-accepted timestamp. It is a durable delivery
+outbox. At-least-once semantics are explicit for crash-after-SMTP-before-DB-commit.
+
+Independent `sandbox.registry`, `sandbox.ledger` and `sandbox.requests` use a separate
+database role/schema and independent immutable fictional records. The source role only
+updates ledger reservation and injected-failure counter columns; it has no core-table
+permissions. Core runtime has no sandbox-schema access. No full real financial reference
+is introduced. Local sandbox ledger IDs refer to fictional records, independently of
+masked portal declarations.
+
+`OPERATOR` is a technical BUREAU/PLATFORM binding. The security-definer assignment command
+uses a fixed search path, validates active operator/target/scope and bounded validity,
+disallows self/MAKER/OPERATOR grants, and appends audit atomically. Execute permission is
+explicit; direct runtime role-binding updates and arbitrary financial authority remain
+forbidden. Schema head after these additions: `52b01026`.
+
 PostgreSQL is authoritative. Alembic owns schema evolution; no create_all at startup.
 UUID identifiers, UTC timestamptz, INR integer paise, explicit date-only banking dates.
 Indexes cover tenant/list/queue/foreign keys. No real financial seed records.

@@ -1,5 +1,27 @@
 # Architecture decisions
 
+ADR-037: use one independent external-system sandbox API with its own PostgreSQL role/
+schema for fictional bank and institution records. Its independently administered data
+is never populated by echoing verification inputs. The core stays a modular monolith.
+The local protocol is assumed, authenticated, signed, correlated and replay-safe; it is
+not a statement of official interface compatibility or bank PKI.
+
+ADR-038: integration requests are a durable database work queue/outbox. Polling and
+retry/dead-letter handling use Celery; request identity/results are protected. Unknown,
+pending, conflicting or stale initiated checks do not count as successful verification.
+Reconciliation requires an independently human-issued output and stays a separate sandbox
+state; worker processing cannot make human decisions or set genuine financial states.
+
+ADR-039: technical operators receive scope-management authority, not access to financial
+records or decisions. A narrow audited DB command permits controlled grants with expiry;
+self grants and grant of operator/MAKER roles are excluded. CSV imports require scoped
+preview and unchanged-file commit and remain DRAFT, transactionally and idempotently.
+
+ADR-040: send actual SMTP to local Mailpit with synthetic .invalid recipients; never
+relay to real email addresses. Durable retry, stable Message-ID and actual mailbox/API
+evidence distinguish delivery from a canned status. SMTP has an at-least-once crash
+window; mailbox receipt is not human reading. Source: https://mailpit.axllent.org/docs/ .
+
 ADR-031: local runtime is a separate PostgreSQL role, read-only application filesystem,
 temporary bounded scratch space and explicit application-only environment. Migration
 owner, IdP admin and demo-user passwords are not inherited by runtime containers.

@@ -1,5 +1,35 @@
 # Security model
 
+## SIH connected-service boundary
+
+The bank/AICTE sandbox is a real network service over independently administered
+fictional records. A separate database role/schema forbids its access to core tables
+and forbids core runtime access to source tables. Client API key, fixture-admin key and
+response-signing key are separate generated credentials. The portal runtime receives
+no fixture-admin, database-owner, IdP-admin or demo-user passwords. Sandbox writes are
+restricted to fictional identifiers; fixture mutation is disallowed. Signed response
+source/protocol, time, body fingerprint and correlations are validated before use.
+Request/result evidence is immutable after completion; late evidence is explicitly STALE.
+The assumed local HMAC protocol is not genuine bank PKI or an official interface contract.
+
+Technical OPERATOR scope is not an institution assignment or approval role. Server auth
+provides its subject to a narrow DB security-definer command with fixed search path,
+explicit execute grants, active-principal/scope checks, expiry, reason and atomic audit.
+Self grants, MAKER grants and OPERATOR grants are excluded. Direct role-binding DML by
+runtime remains blocked. Permanent maker/checker and independent issuer checks still apply.
+
+CSV ingest is bounded, strict and scoped; preview hashes prevent changed-file commit,
+and the mutation/idempotency transaction prevents partial intake or duplicate replay.
+CSV never sets accepted, verified, paid or released states. Full reference input remains
+transient; masking/HMAC protection is reused.
+
+SMTP transport is real but constrained to the local Mailpit host/loopback and fictional
+.invalid recipients; no relay is configured. Delivery retries/dead letters are auditable.
+Stable Message-ID aids correlation but is not an exactly-once SMTP guarantee. A transport
+acceptance does not mean a human read the message. All source and delivery operations are
+separate from regulatory/financial decisions; actual BANK_CONFIRMED and RELEASED stay
+prohibited. Source reconciliation can only follow an independently human-issued output.
+
 ## Trust and identity
 
 Browser, uploaded files, OCR text, model outputs and external callbacks are untrusted.

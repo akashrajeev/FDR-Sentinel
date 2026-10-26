@@ -1,5 +1,58 @@
 # Implementation status
 
+## Phase 5C — completed SIH end-to-end milestone (2026-10-26)
+
+The SIH milestone is complete with real local services and synthetic records. The React
+portal covers onboarding, registry checks, scoped operator assignments, atomic CSV
+intake, private document processing, evidence correction, deterministic policy checks,
+officer scrutiny, maturity/email, independent renewal, bureau holds/clearances, human
+approval/issuance, and separate bank/AICTE sandbox exchange and reconciliation.
+See `SIH_ACCEPTANCE.md` for D1–D10 evidence and `SIH_DEMO_RUNBOOK.md` for judging steps.
+
+Executed final verification:
+
+- `.venv\Scripts\python scripts/local.py -m pytest -q -m browser`: **8 passed,
+  80 deselected in 154.91s**. Real PKCE logins, HTTP APIs, PostgreSQL, S3, scanner/OCR,
+  workers, source sandbox and SMTP were exercised. Evidence: `.local/milestone-browser-final.log`.
+- `docker compose --profile test run --rm test`: **80 passed, 5 browser tests
+  deselected in 44.29s** at Phase 5B. The expanded final-source backend suite was
+  re-executed in the clean deployment below; browser additions account for the later
+  eight deselections. Evidence: `.local/milestone-tests-b2.log`.
+- `.venv\Scripts\python scripts/fresh_acceptance.py --snapshot 20261022T000000Z`:
+  **PASS**, fresh generated credentials, images, database, private storage, source
+  sandbox, IdP, worker and Mailpit in isolated project `sentinel-acceptance-1aaefc8e`.
+  **80 backend tests passed, 8 deselected in 65.85s**; readiness passed; total **231.53s**.
+  Source export: **121 files**, SHA-256
+  `9afbacb3265c0b9e35f1ef06a99033e9e09efd6d5f8f68ab81044bf829fdca13`.
+  Evidence retained under `.local/fresh-acceptance-1aaefc8e`; isolated services stopped
+  after verification. This was a cold backend acceptance run; the browser run used the
+  primary stack. Later documentation edits are not included in that source-export hash.
+- `npm run build --prefix apps/web`, Ruff, generated OpenAPI/TypeScript contracts and
+  `git diff --check`: passed. `npm audit --prefix apps/web --audit-level=high`: **0 vulnerabilities**.
+- `.venv\Scripts\python scripts/local.py scripts/smoke_local_ai.py`: actual local
+  Qwen2.5:0.5b connection, **2/3 fields retained with independent source linking**, one
+  unsupported proposal rejected, **8.99s**. No original model quote passed validation.
+- `.venv\Scripts\python scripts/local.py scripts/restore_drill.py`: **PASS**, both
+  public/sandbox schemas, **25 tables, 1,679 rows, 719 audit rows, 160 object hashes**,
+  **10.26s**, source untouched. Evidence: `.local/milestone-restore.json`.
+
+Browser verification exposed and fixed stale renewal versions after maturity refresh,
+ambiguous form labels, stale notices across navigation, and premature evaluation/submit
+controls during evidence processing. Superseded evidence remains retained and excluded
+from the active readiness gate. Removed the old echo-fixture buttons from the interactive
+UI; historical fixture evidence remains explicitly labeled. Screenshots of import,
+renewal and issued/reconciled output were visually inspected. Core runtime environment inspection found no owner,
+IdP-admin, source fixture-admin, source DB password or demo-account secrets.
+
+No known blocker remains for the documented local SIH flows. Phase 4B production
+activation is **not complete**: written integration authority, current applicable
+regulatory review, real institution onboarding, deployment/security qualification and
+operational sign-off remain external work. No real money moves, bank confirmation,
+official regulator receipt or legal-compliance certification is claimed. Optional AI
+has a tiny synthetic evaluation, existing OS/JDK advisories remain documented, and
+restore qualification is local only. No Git remote is configured, so hosted CI has not
+run; its workflow exists and local verification is recorded here.
+
 ## Phase 5B — completed operator, legacy intake and SMTP workflows
 
 Implemented authenticated technical-operator workspace and scoped grants/revocations,
@@ -52,7 +105,7 @@ Final-source focused recheck: `.venv\Scripts\python scripts/local.py --test -m p
 -q tests/test_sandbox_integrations.py`: **8 passed in 40.13s**. Ruff and frontend
 TypeScript/Vite build passed after the final source changes.
 
-Current scope: complete synthetic local workflows through Phase 3, with Phase 4A local
+Earlier baseline: complete synthetic local workflows through Phase 3, with Phase 4A local
 operational qualification below. Phase 4B production activation remains blocked. The
 architecture/review are design inputs; this register is the actual evidence record.
 Live local portal: http://localhost:8088. No real bank/AICTE or settlement connection.

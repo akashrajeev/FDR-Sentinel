@@ -1,5 +1,14 @@
 # Implementation plan
 
+SIH completion scope was extended on 2026-10-26: real independent bank/AICTE sandbox
+APIs with fictional data, durable source exchanges and reconciliation; actual local
+SMTP; operator assignment and transactional CSV; full browser and clean-source/fresh-
+volume acceptance. See SIH_COMPLETION_PLAN.md for dependencies and STATUS.md for results.
+This work does not wait for production authorization and does not remove production gates.
+Phases 5A, 5B and 5C are complete locally; STATUS.md records the 80-test backend,
+eight-journey browser and clean-deployment acceptance results. The next milestone is
+production activation qualification (Phase 4B), requiring the external inputs listed there.
+
 Baseline reviewed: ARCHITECTURE.md v1.0, AGENT_START_HERE.md and ARCHITECTURE_SLIDE.svg.
 Assessment date: 2026-10-23 (Asia/Kolkata). ARCHITECTURE_SLIDE.png was not present.
 This plan describes work; STATUS.md is the implementation evidence register.

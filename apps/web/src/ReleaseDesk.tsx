@@ -32,16 +32,18 @@ const val = (form: HTMLFormElement) =>
   Object.fromEntries(new FormData(form).entries()) as Record<string, string>;
 
 export function ReleaseDesk({
-  records,
+  records: initialRecords,
   bindings,
 }: {
   records: Deposit[];
   bindings: Binding[];
 }) {
+  const [records, setRecords] = useState<Deposit[]>(initialRecords);
   const [cases, setCases] = useState<Case[]>([]);
   const [selected, setSelected] = useState<Case | null>(null);
   const [relations, setRelations] = useState<Relation[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [notificationFilter, setNotificationFilter] = useState("");
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
@@ -50,16 +52,20 @@ export function ReleaseDesk({
       (b) => b.role === role && b.scope_type === scope && b.scope_id === id,
     );
   const refresh = useCallback(async () => {
-    const [a, b, c] = await Promise.all([
+    const [a, b, c, freshRecords] = await Promise.all([
       api<Case[]>("/release-cases"),
       api<Relation[]>("/replacements"),
-      api<Notification[]>("/notifications"),
+      api<Notification[]>(
+        `/notifications${notificationFilter ? `?deposit_id=${encodeURIComponent(notificationFilter)}` : ""}`,
+      ),
+      api<Deposit[]>("/deposits"),
     ]);
     setCases(a);
     setRelations(b);
     setNotifications(c);
+    setRecords(freshRecords);
     if (selected) setSelected(a.find((c) => c.id === selected.id) ?? selected);
-  }, [selected?.id]);
+  }, [selected?.id, notificationFilter]);
   useEffect(() => {
     refresh().catch((e) => setError(e.message));
     const timer = setInterval(
@@ -200,7 +206,11 @@ export function ReleaseDesk({
               >
                 <label className="field">
                   <span>Accepted deposit</span>
-                  <select name="deposit_id" required>
+                  <select
+                    name="deposit_id"
+                    aria-label="Accepted deposit"
+                    required
+                  >
                     {records
                       .filter(
                         (d) =>
@@ -241,7 +251,8 @@ export function ReleaseDesk({
             <h2>Maturity monitor</h2>
             <p>
               90 / 30 / 7 day reminders are product policy. Alerts persist
-              in-app; no external email/SMS is sent.
+              in-app and are delivered by SMTP to the local test mailbox. No
+              real external recipient is contacted.
             </p>
             {bindings.some((b) => b.role === "REVIEWER") && (
               <form
@@ -262,6 +273,13 @@ export function ReleaseDesk({
                 <button disabled={busy}>Run maturity monitor</button>
               </form>
             )}
+            <label className="field">
+              <span>Filter reminders by deposit ID</span>
+              <input
+                value={notificationFilter}
+                onChange={(e) => setNotificationFilter(e.target.value.trim())}
+              />
+            </label>
             {notifications.slice(0, 12).map((n) => (
               <div className="audit-row" key={n.id}>
                 <span className="status-dot" />
@@ -342,7 +360,7 @@ export function ReleaseDesk({
               >
                 <label className="field">
                   <span>Original deposit</span>
-                  <select name="old">
+                  <select name="old" aria-label="Original deposit">
                     {records
                       .filter(
                         (d) =>
@@ -358,7 +376,7 @@ export function ReleaseDesk({
                 </label>
                 <label className="field">
                   <span>New accepted deposit</span>
-                  <select name="next">
+                  <select name="next" aria-label="New accepted deposit">
                     {records
                       .filter(
                         (d) =>
@@ -374,7 +392,7 @@ export function ReleaseDesk({
                 </label>
                 <label className="field">
                   <span>Relationship</span>
-                  <select name="kind">
+                  <select name="kind" aria-label="Relationship">
                     <option>REPLACEMENT</option>
                     <option>RENEWAL</option>
                     <option>AUTO_RENEWAL_RECORDED</option>
