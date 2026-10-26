@@ -17,7 +17,14 @@ def login(page, username):
     page.get_by_label('Username or email').fill(username)
     page.get_by_label('Password', exact=True).fill(os.environ[f'DEMO_{username.upper().replace("-", "_")}_PASSWORD'])
     page.get_by_role('button', name='Sign In', exact=True).click()
-    expect(page.get_by_role('heading', name='Your operations, at a glance.')).to_be_visible(timeout=30000)
+    expect(page.get_by_role('heading', name='Deposit operations', exact=True)).to_be_visible(timeout=30000)
+
+
+def open_scoped_deposit(page, identity):
+    page.get_by_role('button', name='Deposits', exact=True).click()
+    page.get_by_label('Search deposit records', exact=True).fill(identity)
+    page.get_by_role('button', name='Search register', exact=True).click()
+    page.get_by_role('button', name=identity[:8].upper(), exact=True).click()
 
 
 def test_browser_real_pkce_and_worker_to_officer():
@@ -54,7 +61,7 @@ def test_browser_real_pkce_and_worker_to_officer():
         officer = officer_context.new_page()
         officer.on('pageerror', lambda error: errors.append(str(error)))
         login(officer, 'reviewer')
-        officer.get_by_text(record['id'][:8].upper(), exact=False).first.click()
+        open_scoped_deposit(officer, record['id'])
         officer.get_by_label('Officer decision').select_option('ACCEPT_REGISTRATION')
         officer.get_by_label('Reason / correction request').fill('Original synthetic evidence inspected; registration only, no bank confirmation.')
         officer.get_by_role('checkbox').check()
@@ -205,14 +212,14 @@ def test_browser_new_onboarding_operator_assignment_registry_and_csv():
         expect(card.get_by_text('MATCH', exact=True)).to_be_visible(timeout=45000)
         operator = browser.new_context(viewport={'width': 1440, 'height': 1100}).new_page()
         login(operator, 'operator')
-        operator.get_by_role('button', name='⚙ Operator', exact=True).click()
+        operator.get_by_role('button', name='Operator', exact=True).click()
         operator.get_by_label('Officer principal', exact=True).select_option('10000000-0000-0000-0000-000000000003')
         operator.get_by_label('Assigned scope', exact=True).select_option(institution)
         operator.get_by_label('Assignment reason', exact=True).fill('Assign independent reviewer to fictional browser onboarding.')
         operator.get_by_role('button', name='Assign scoped officer', exact=True).click()
         expect(operator.get_by_role('status')).to_contain_text('committed')
         operator.screenshot(path='.local/browser/operator-assignment.png', full_page=True)
-        maker.get_by_role('button', name='⇧ Legacy import', exact=True).click()
+        maker.get_by_role('button', name='Legacy import', exact=True).click()
         data = csv_data([{'obligation_id': obligation['id']}])
         maker.get_by_label('Legacy CSV file', exact=True).set_input_files({'name': 'fictional.csv', 'mimeType': 'text/csv', 'buffer': data})
         maker.get_by_role('button', name='Validate import preview', exact=True).click()
@@ -240,7 +247,8 @@ def test_browser_maturity_email_and_independent_renewal_lineage():
         with reviewer.expect_response(lambda r: r.url.endswith('/api/v1/monitoring/run') and r.request.method == 'POST') as response:
             reviewer.get_by_role('button', name='Run maturity monitor', exact=True).click()
         assert response.value.status == 200
-        expect(reviewer.get_by_text(re.compile('Email: SENT'))).to_be_visible(timeout=60000)
+        reminder = reviewer.locator('.audit-row').filter(has_text=old['id'][:8].upper()).filter(has_text='2026-09-24')
+        expect(reminder.get_by_text(re.compile('Email: SENT'))).to_be_visible(timeout=60000)
         reviewer.screenshot(path='.local/browser/maturity-email.png', full_page=True)
         maker = browser.new_context(viewport={'width': 1440, 'height': 1100}).new_page()
         login(maker, 'institution')
@@ -286,7 +294,7 @@ def test_browser_deficient_scrutiny_return_correction_and_tenant_isolation():
         expect(maker.get_by_text('PENDING SCRUTINY', exact=True)).to_be_visible()
         officer = browser.new_context(viewport={'width': 1440, 'height': 1100}).new_page()
         login(officer, 'reviewer')
-        officer.get_by_text(record['id'][:8].upper(), exact=False).first.click()
+        open_scoped_deposit(officer, record['id'])
         officer.get_by_label('Officer decision').select_option('ACCEPT_REGISTRATION')
         officer.get_by_label('Reason / correction request').fill('Underfunded synthetic source inspected; attempt must remain blocked.')
         officer.get_by_role('checkbox').check()
@@ -369,7 +377,7 @@ def test_browser_scanned_evidence_annotation_and_simulated_bank():
         expect(page.get_by_text('PENDING SCRUTINY', exact=True)).to_be_visible()
         officer = browser.new_context(viewport={'width': 1440, 'height': 1100}).new_page()
         login(officer, 'reviewer')
-        officer.get_by_text(record['id'][:8].upper(), exact=False).first.click()
+        open_scoped_deposit(officer, record['id'])
         officer.get_by_label('Independent correction reason', exact=True).fill('Scanned original amount and bounded region independently inspected and confirmed.')
         officer.get_by_role('button', name='Record correction decision', exact=True).click()
         expect(officer.get_by_text('CONFIRMED', exact=True)).to_be_visible()
@@ -521,4 +529,53 @@ def test_browser_configurable_intervention_escalation_csv_and_source_resolution(
         expect(page.get_by_text('1 matching interventions', exact=True)).to_be_visible()
         assert not errors
         page.screenshot(path='.local/browser/intervention-resolved.png', full_page=True)
+        browser.close()
+
+
+def test_browser_registry_home_mobile_access_and_live_register_filters():
+    with portal_client('institution') as maker:
+        deposit = api_command(maker, '/deposits', {
+            'obligation_id': '30000000-0000-0000-0000-000000000001', 'deposit_type': 'FDR',
+            'bank_code': 'SYN-REGISTRY', 'reference': 'SYN-REGISTRY-' + uuid4().hex,
+            'amount_paise': 350000000, 'issue_date': '2016-10-01', 'maturity_date': '2026-10-01'})
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch(channel=os.getenv('BROWSER_CHANNEL', 'chromium'))
+        page = browser.new_page(viewport={'width': 1440, 'height': 1050})
+        errors, public_requests = [], []
+        page.on('pageerror', lambda error: errors.append(str(error)))
+        page.on('request', lambda request: public_requests.append(request.url))
+        page.goto('http://localhost:8088')
+        expect(page.get_by_role('heading', name=re.compile('Security deposit &'))).to_be_visible()
+        assert page.get_by_role('table').count() == 0
+        assert not any('/api/v1/' in url for url in public_requests)
+        page.screenshot(path='.local/browser/registry-home.png', full_page=True)
+        page.get_by_role('link', name='Workflow', exact=True).click()
+        expect(page.get_by_role('heading', name='One connected administrative record.')).to_be_in_viewport()
+        page.set_viewport_size({'width': 390, 'height': 844})
+        page.goto('http://localhost:8088')
+        expect(page.get_by_role('button', name='Sign in securely', exact=True)).to_be_visible()
+        assert page.evaluate('document.documentElement.scrollWidth <= innerWidth')
+        page.screenshot(path='.local/browser/registry-home-mobile.png', full_page=True)
+        page.set_viewport_size({'width': 1440, 'height': 1050})
+        login(page, 'reviewer')
+        expect(page.get_by_role('heading', name='Needs attention')).to_be_visible()
+        page.screenshot(path='.local/browser/registry-overview.png', full_page=True)
+        page.get_by_role('button', name='Deposits', exact=True).click()
+        page.get_by_label('Search deposit records', exact=True).fill(deposit['id'])
+        with page.expect_response(lambda r: '/api/v1/search/deposits?' in r.url and deposit['id'] in r.url):
+            page.get_by_role('button', name='Search register', exact=True).click()
+        expect(page.get_by_role('button', name=deposit['id'][:8].upper(), exact=True)).to_be_visible()
+        page.get_by_label('Register review status', exact=True).select_option('ACCEPTED')
+        page.get_by_role('button', name='Search register', exact=True).click()
+        expect(page.get_by_role('heading', name='No matching records')).to_be_visible()
+        page.get_by_label('Register review status', exact=True).select_option('DRAFT')
+        page.get_by_role('button', name='Search register', exact=True).click()
+        page.get_by_role('button', name=deposit['id'][:8].upper(), exact=True).click()
+        expect(page.get_by_role('heading', name='Document evidence', exact=True)).to_be_visible()
+        page.set_viewport_size({'width': 390, 'height': 844})
+        assert page.evaluate('document.documentElement.scrollWidth <= innerWidth')
+        assert not errors, errors
+        page.screenshot(path='.local/browser/registry-record-mobile.png', full_page=True)
+        page.get_by_role('button', name='← All deposits', exact=True).click()
+        expect(page.get_by_label('Search deposit records', exact=True)).to_be_visible()
         browser.close()

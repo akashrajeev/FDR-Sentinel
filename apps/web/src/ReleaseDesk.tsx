@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { api, download, type Schemas } from "./api";
 import { IntegrationPanel } from "./IntegrationPanel";
 
@@ -47,11 +47,13 @@ export function ReleaseDesk({
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
+  const refreshRevision = useRef(0);
   const has = (role: string, id: string, scope = "INSTITUTION") =>
     bindings.some(
       (b) => b.role === role && b.scope_type === scope && b.scope_id === id,
     );
   const refresh = useCallback(async () => {
+    const revision = ++refreshRevision.current;
     const [a, b, c, freshRecords] = await Promise.all([
       api<Case[]>("/release-cases"),
       api<Relation[]>("/replacements"),
@@ -60,6 +62,7 @@ export function ReleaseDesk({
       ),
       api<Deposit[]>("/deposits"),
     ]);
+    if (revision !== refreshRevision.current) return;
     setCases(a);
     setRelations(b);
     setNotifications(c);
@@ -72,7 +75,10 @@ export function ReleaseDesk({
       () => refresh().catch((e) => setError(e.message)),
       4000,
     );
-    return () => clearInterval(timer);
+    return () => {
+      clearInterval(timer);
+      refreshRevision.current++;
+    };
   }, [refresh]);
   const act = async (task: () => Promise<unknown>, message: string) => {
     setBusy(true);
@@ -160,7 +166,15 @@ export function ReleaseDesk({
                   </thead>
                   <tbody>
                     {cases.map((c) => (
-                      <tr key={c.id} onClick={() => setSelected(c)}>
+                      <tr
+                        key={c.id}
+                        className="clickable-row"
+                        tabIndex={0}
+                        onClick={() => setSelected(c)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") setSelected(c);
+                        }}
+                      >
                         <td>
                           <strong>{short(c.id)}</strong>
                           <small>{short(c.deposit_id)}</small>
@@ -280,46 +294,52 @@ export function ReleaseDesk({
                 onChange={(e) => setNotificationFilter(e.target.value.trim())}
               />
             </label>
-            {notifications.slice(0, 12).map((n) => (
-              <div className="audit-row" key={n.id}>
-                <span className="status-dot" />
-                <div>
-                  <strong>
-                    {short(n.deposit_id)} ·{" "}
-                    {n.detail.days_remaining <= 0
-                      ? "Matured"
-                      : `${n.detail.days_remaining} days remaining`}
-                  </strong>
-                  <small>
-                    As of {n.detail.as_of} · {n.detail.threshold}-day band ·
-                    persisted in-app
-                  </small>
-                  <small>
-                    Email: {n.delivery?.state ?? "PENDING_DELIVERY_SETUP"} ·{" "}
-                    {n.delivery?.attempts ?? 0} attempts
-                  </small>
-                  {n.delivery?.last_error && (
-                    <p className="error">{n.delivery.last_error}</p>
-                  )}
-                  {n.delivery?.state === "DEAD_LETTER" && (
-                    <button
-                      disabled={busy}
-                      onClick={() =>
-                        act(
-                          () =>
-                            api(`/notifications/${n.id}/retry`, {
-                              expected_version: n.delivery!.attempts,
-                            }),
-                          "Email delivery requeued.",
-                        )
-                      }
-                    >
-                      Retry failed email
-                    </button>
-                  )}
+            {notifications
+              .filter(
+                (n) =>
+                  !notificationFilter || n.deposit_id === notificationFilter,
+              )
+              .slice(0, 12)
+              .map((n) => (
+                <div className="audit-row" key={n.id}>
+                  <span className="status-dot" />
+                  <div>
+                    <strong>
+                      {short(n.deposit_id)} ·{" "}
+                      {n.detail.days_remaining <= 0
+                        ? "Matured"
+                        : `${n.detail.days_remaining} days remaining`}
+                    </strong>
+                    <small>
+                      As of {n.detail.as_of} · {n.detail.threshold}-day band ·
+                      persisted in-app
+                    </small>
+                    <small>
+                      Email: {n.delivery?.state ?? "PENDING_DELIVERY_SETUP"} ·{" "}
+                      {n.delivery?.attempts ?? 0} attempts
+                    </small>
+                    {n.delivery?.last_error && (
+                      <p className="error">{n.delivery.last_error}</p>
+                    )}
+                    {n.delivery?.state === "DEAD_LETTER" && (
+                      <button
+                        disabled={busy}
+                        onClick={() =>
+                          act(
+                            () =>
+                              api(`/notifications/${n.id}/retry`, {
+                                expected_version: n.delivery!.attempts,
+                              }),
+                            "Email delivery requeued.",
+                          )
+                        }
+                      >
+                        Retry failed email
+                      </button>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
           </section>
           <section className="panel">
             <h2>Renewal & replacement lineage</h2>

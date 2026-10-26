@@ -9,6 +9,10 @@ import { Reports } from "./Reports";
 import { IntegrationPanel } from "./IntegrationPanel";
 import { OperatorPanel } from "./OperatorPanel";
 import { LegacyImport } from "./LegacyImport";
+import { Brand, Icon } from "./Icon";
+import { LandingPage } from "./LandingPage";
+import { DepositRegister } from "./DepositRegister";
+import { AttentionQueue, OverviewMetrics, RecentActivity } from "./Overview";
 
 type Deposit = Schemas["DepositOut"];
 type Detail = Schemas["DepositDetail"];
@@ -31,7 +35,7 @@ const display = (value: string) => value.replaceAll("_", " ");
 function Badge({ value }: { value: string }) {
   return (
     <span
-      className={`badge ${["FAIL", "REJECTED", "FAILED"].includes(value) ? "red" : ["READY", "ACCEPTED", "MANUALLY_REVIEWED"].includes(value) ? "green" : ""}`}
+      className={`badge ${["FAIL", "REJECTED", "FAILED"].includes(value) ? "red" : value === "READY" ? "green" : ["ACCEPTED", "MANUALLY_REVIEWED"].includes(value) ? "blue" : ""}`}
     >
       {display(value)}
     </span>
@@ -84,6 +88,14 @@ function App() {
   const [audit, setAudit] = useState<Schemas["AuditOut"][]>([]);
   const [form, setForm] = useState("");
   const [kind, setKind] = useState("FDR");
+
+  const navigate = (name: string) => {
+    setTab(name);
+    setSelected(null);
+    setForm("");
+    setNotice("");
+    setError("");
+  };
 
   useEffect(() => {
     (async () => {
@@ -195,118 +207,70 @@ function App() {
     return <div className="splash">Preparing secure workspace…</div>;
   if (!user)
     return (
-      <div className="login">
-        <div className="login-main">
-          <div className="wordmark">
-            <span className="logo">S</span> FDR Sentinel
-          </div>
-          <p className="eyebrow">SIH 2026 · SIH26265</p>
-          <h1>
-            Every deposit.
-            <br />
-            Every decision.
-            <br />
-            <em>Accounted for.</em>
-          </h1>
-          <p>
-            One workspace for institutional security deposits, evidence and
-            accountable officer review.
-          </p>
-          <button onClick={() => identity.signinRedirect()} className="primary">
-            Sign in securely <span>↗</span>
-          </button>
-          {error && (
-            <p role="alert" className="error">
-              {error}
-            </p>
-          )}
-          <small>Keycloak OIDC · Authorization code + PKCE</small>
-        </div>
-        <div className="login-side">
-          <div className="orbit">
-            S
-            <span className="orbit-label">EVIDENCE → SCRUTINY → CLEARANCE</span>
-          </div>
-          <div>
-            <Badge value="SYNTHETIC_LOCAL" />
-            <h2>
-              Built around evidence.
-              <br />
-              Governed by people.
-            </h2>
-            <p>
-              Bank and AICTE sandbox APIs use fictional records. Official
-              systems are not connected. Policy fixtures are provisional. No
-              actual financial release.
-            </p>
-          </div>
-        </div>
-      </div>
+      <LandingPage onSignIn={() => identity.signinRedirect()} error={error} />
     );
 
   return (
     <div className="shell">
-      <aside>
-        <div className="wordmark">
-          <span className="logo">S</span>
-          <div>
-            FDR Sentinel<small>DEPOSIT OPERATIONS</small>
-          </div>
-        </div>
+      <a className="skip-link" href="#workspace-content">
+        Skip to workspace
+      </a>
+      <aside className="workspace-sidebar">
+        <Brand caption />
         <div className="nav-label">WORKSPACE</div>
-        {[
-          "Overview",
-          "Deposits",
-          "Institutions",
-          "Release cases",
-          "Reports",
-          "Audit trail",
-        ].map((name, i) => (
-          <button
-            key={name}
-            className={`nav ${tab === name ? "active" : ""}`}
-            onClick={() => {
-              setTab(name);
-              setSelected(null);
-              setForm("");
-              setNotice("");
-              setError("");
-            }}
-          >
-            <span>{["◫", "▤", "⌂", "⇄", "▥", "◷"][i]}</span>
-            {name}
-          </button>
-        ))}
-        {me?.bindings.some((b) => b.role === "MAKER") && (
-          <button
-            className={`nav ${tab === "Legacy import" ? "active" : ""}`}
-            onClick={() => {
-              setTab("Legacy import");
-              setSelected(null);
-              setForm("");
-              setNotice("");
-              setError("");
-            }}
-          >
-            ⇧ Legacy import
-          </button>
-        )}
-        {me?.bindings.some((b) => b.role === "OPERATOR") && (
-          <button
-            className={`nav ${tab === "Operator" ? "active" : ""}`}
-            onClick={() => {
-              setTab("Operator");
-              setSelected(null);
-              setForm("");
-              setNotice("");
-              setError("");
-            }}
-          >
-            ⚙ Operator
-          </button>
-        )}
+        <nav aria-label="Workspace">
+          {[
+            "Overview",
+            "Deposits",
+            "Institutions",
+            "Release cases",
+            "Reports",
+            "Audit trail",
+          ].map((name, i) => (
+            <button
+              key={name}
+              className={`nav ${tab === name ? "active" : ""}`}
+              aria-current={tab === name ? "page" : undefined}
+              onClick={() => navigate(name)}
+            >
+              <Icon
+                name={
+                  [
+                    "overview",
+                    "deposits",
+                    "institutions",
+                    "releases",
+                    "reports",
+                    "audit",
+                  ][i]
+                }
+              />
+              <span className="nav-text">{name}</span>
+            </button>
+          ))}
+          {me?.bindings.some((b) => b.role === "MAKER") && (
+            <button
+              className={`nav ${tab === "Legacy import" ? "active" : ""}`}
+              aria-current={tab === "Legacy import" ? "page" : undefined}
+              onClick={() => navigate("Legacy import")}
+            >
+              <Icon name="import" />
+              <span className="nav-text">Legacy import</span>
+            </button>
+          )}
+          {me?.bindings.some((b) => b.role === "OPERATOR") && (
+            <button
+              className={`nav ${tab === "Operator" ? "active" : ""}`}
+              aria-current={tab === "Operator" ? "page" : undefined}
+              onClick={() => navigate("Operator")}
+            >
+              <Icon name="operator" />
+              <span className="nav-text">Operator</span>
+            </button>
+          )}
+        </nav>
         <div className="sidebar-bottom">
-          <span className="status-dot" />
+          <span className="status-dot" data-ready={health === "ready"} />
           {health}
           <p>SIH26265 · Development</p>
           <button
@@ -315,12 +279,12 @@ function App() {
               identity.signoutRedirect({ id_token_hint: user.id_token })
             }
           >
-            Sign out ↗
+            <Icon name="logout" /> Sign out
           </button>
         </div>
       </aside>
-      <main>
-        <header>
+      <main className="workspace-main">
+        <header className="workspace-header">
           <div className="breadcrumb">
             Workspace <span>/</span> {tab}
           </div>
@@ -342,10 +306,10 @@ function App() {
           </div>
         </header>
         <div className="mode">
-          <span>◈ SYNTHETIC ENVIRONMENT</span> Bank / AICTE: sandbox APIs ·
-          Provisional policy · Human decisions required
+          <span>Synthetic environment</span> Bank / AICTE sandboxes ·
+          Provisional policy · Human approval required
         </div>
-        <div className="content">
+        <div className="content" id="workspace-content">
           <div className="page-heading">
             <div>
               <p className="eyebrow">INSTITUTIONAL SECURITY DEPOSITS</p>
@@ -353,13 +317,15 @@ function App() {
                 {selected
                   ? `Deposit ${short(selected.id)}`
                   : tab === "Overview"
-                    ? "Your operations, at a glance."
+                    ? "Deposit operations"
                     : tab}
               </h1>
               <p>
                 {selected
                   ? `${selected.deposit_type} · ${selected.bank_code} · Reference ending ${selected.reference_last4}`
-                  : "A clear view of records, evidence and the decisions that move them forward."}
+                  : tab === "Overview"
+                    ? "Institutional security deposits across your assigned scope."
+                    : "Records, evidence and controlled decisions within your assigned scope."}
               </p>
             </div>
             {!selected && (
@@ -386,12 +352,24 @@ function App() {
               </div>
             )}
             {selected && (
-              <button onClick={() => setSelected(null)}>← All deposits</button>
+              <button onClick={() => navigate("Deposits")}>
+                ← All deposits
+              </button>
             )}
           </div>
           {error && (
             <div className="error" role="alert">
               {error}
+              {!me && (
+                <button
+                  onClick={() => {
+                    setError("");
+                    refresh().catch((e) => setError(e.message));
+                  }}
+                >
+                  Retry workspace
+                </button>
+              )}
               <button onClick={() => setError("")}>×</button>
             </div>
           )}
@@ -541,7 +519,7 @@ function App() {
                   e.preventDefault();
                   const v = values(e.currentTarget);
                   perform(async () => {
-                    await api("/deposits", {
+                    const created = await api<Deposit>("/deposits", {
                       obligation_id: v.obligation_id,
                       deposit_type: v.type,
                       bank_code: v.bank_code,
@@ -552,6 +530,7 @@ function App() {
                       deposited_on: v.deposited_on || null,
                     });
                     setForm("");
+                    setSelected(await api<Detail>(`/deposits/${created.id}`));
                   }, "Deposit persisted. Upload its proof to begin scrutiny.");
                 }}
               >
@@ -631,131 +610,41 @@ function App() {
               </form>
             </section>
           )}
-          {!selected && !form && (
+          {!me && !error && (
+            <div className="workspace-loading" role="status">
+              Loading your scoped workspace…
+            </div>
+          )}
+          {me && !selected && !form && (
             <>
-              {tab === "Overview" && (
+              {(tab === "Overview" || tab === "Deposits") && (
                 <>
-                  <div className="stats">
+                  {tab === "Overview" && <OverviewMetrics summary={summary} />}
+                  <div
+                    className={
+                      tab === "Overview" ? "overview-layout" : "register-layout"
+                    }
+                  >
                     <div>
-                      <span>Total recorded</span>
-                      <strong>
-                        {Object.values(summary?.workflow_counts ?? {})
-                          .reduce((a, b) => a + b, 0)
-                          .toString()
-                          .padStart(2, "0")}
-                      </strong>
-                      <small>Across your assigned scope</small>
+                      <DepositRegister
+                        records={records}
+                        institutions={institutions}
+                        overview={tab === "Overview"}
+                        onOpen={open}
+                        onViewAll={() => navigate("Deposits")}
+                      />
+                      {tab === "Overview" && (
+                        <RecentActivity events={audit} onNavigate={navigate} />
+                      )}
                     </div>
-                    <div>
-                      <span>Declared deposit value</span>
-                      <strong>
-                        {money(summary?.declared_total_paise ?? 0)}
-                      </strong>
-                      <small>Institution assertions · not bank verified</small>
-                    </div>
-                    <div>
-                      <span>Awaiting scrutiny</span>
-                      <strong>
-                        {(summary?.workflow_counts.PENDING_SCRUTINY ?? 0)
-                          .toString()
-                          .padStart(2, "0")}
-                      </strong>
-                      <small>Human review required</small>
-                    </div>
-                    <div>
-                      <span>Registration accepted</span>
-                      <strong>
-                        {(summary?.workflow_counts.ACCEPTED ?? 0)
-                          .toString()
-                          .padStart(2, "0")}
-                      </strong>
-                      <small>Separate from release eligibility</small>
-                    </div>
-                  </div>
-                  <div className="insight">
-                    <div className="insight-icon">↗</div>
-                    <div>
-                      <h2>Evidence first. Decisions with a record.</h2>
-                      <p>
-                        Upload proof, inspect deterministic findings and send
-                        deposits to an assigned officer. Every transition
-                        retains its actor, reason and policy revision.
-                      </p>
-                    </div>
-                    <span className="muted">APH 2024–27 / provisional</span>
+                    {tab === "Overview" && (
+                      <AttentionQueue
+                        refreshKey={audit[0]?.id ?? ""}
+                        onNavigate={navigate}
+                      />
+                    )}
                   </div>
                 </>
-              )}
-              {(tab === "Overview" || tab === "Deposits") && (
-                <section className="panel">
-                  <div className="section-head">
-                    <div>
-                      <h2>Deposit register</h2>
-                      <p>Latest 100 scoped records · amounts in INR</p>
-                    </div>
-                    <Badge value="PERSISTENT_DATA" />
-                  </div>
-                  {records.length ? (
-                    <div className="table-scroll">
-                      <table>
-                        <thead>
-                          <tr>
-                            <th>Record / institution</th>
-                            <th>Type</th>
-                            <th>Declared amount</th>
-                            <th>Maturity</th>
-                            <th>Review status</th>
-                            <th />
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {records.map((d) => (
-                            <tr
-                              key={d.id}
-                              onClick={() => open(d)}
-                              tabIndex={0}
-                              onKeyDown={(e) => e.key === "Enter" && open(d)}
-                            >
-                              <td>
-                                <strong>
-                                  {short(d.id)}{" "}
-                                  <span className="muted">
-                                    ··{d.reference_last4}
-                                  </span>
-                                </strong>
-                                <small>
-                                  {
-                                    institutions.find(
-                                      (i) => i.id === d.institution_id,
-                                    )?.legal_name
-                                  }
-                                </small>
-                              </td>
-                              <td>{d.deposit_type}</td>
-                              <td className="amount">
-                                {money(d.amount_paise)}
-                              </td>
-                              <td>{d.maturity_date ?? "Not applicable"}</td>
-                              <td>
-                                <Badge value={d.workflow} />
-                              </td>
-                              <td>↗</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  ) : (
-                    <div className="empty">
-                      <span>▤</span>
-                      <h3>Your deposit register starts here</h3>
-                      <p>
-                        Onboard an institution, register its obligation and
-                        upload a synthetic deposit proof.
-                      </p>
-                    </div>
-                  )}
-                </section>
               )}
               {tab === "Institutions" && (
                 <div className="institution-grid">
@@ -818,6 +707,15 @@ function App() {
           )}
           {selected && (
             <>
+              <nav className="record-tabs" aria-label="Record sections">
+                <a href="#record-evidence">Record &amp; evidence</a>
+                <a href="#policy-review">Policy &amp; scrutiny</a>
+                <a href="#source-checks">Source checks</a>
+                <a href="#evidence-workspace">Document review</a>
+                {selected.decisions.length > 0 && (
+                  <a href="#officer-history">Officer history</a>
+                )}
+              </nav>
               <div className="detail-strip">
                 <div>
                   <span>Declared amount</span>
@@ -840,7 +738,7 @@ function App() {
                 </div>
               </div>
               <div className="detail-grid">
-                <section className="panel">
+                <section className="panel" id="record-evidence">
                   <div className="section-head">
                     <h2>Document evidence</h2>
                     <span className="muted">Private · originals retained</span>
@@ -934,7 +832,7 @@ function App() {
                       </form>
                     )}
                 </section>
-                <section className="panel">
+                <section className="panel" id="policy-review">
                   <div className="section-head">
                     <h2>Policy & consistency checks</h2>
                     <Badge
@@ -1132,7 +1030,7 @@ function App() {
                 busy={busy}
               />
               {selected.decisions.length > 0 && (
-                <section className="panel">
+                <section className="panel" id="officer-history">
                   <h2>Officer decisions</h2>
                   {selected.decisions.map((d, i) => (
                     <div className="audit-row" key={i}>
@@ -1149,7 +1047,7 @@ function App() {
           )}
           <footer>
             <span>FDR Sentinel / SIH26265</span>
-            <span>Human accountability at every decision.</span>
+            <span>Provisional policy · No actual financial release</span>
           </footer>
         </div>
       </main>

@@ -101,8 +101,8 @@ def test_missing_evidence_escalates_real_smtp_ack_does_not_resolve_and_source_cl
     with session_factory()() as db:
         delivery = db.scalar(select(NotificationDelivery.id).where(NotificationDelivery.notification_id == notice['id']))
     assert deliver_one(delivery) == 'SENT'
-    messages = httpx.get(os.environ.get('MAILPIT_URL', 'http://mailpit:8025') + '/api/v1/messages',
-                        params={'limit': 100}, timeout=10).json()['messages']
+    messages = httpx.get(os.environ.get('MAILPIT_URL', 'http://mailpit:8025') + '/api/v1/search',
+                        params={'query': 'subject:' + notice['id'], 'limit': 100}, timeout=10).json()['messages']
     message = next(m for m in messages if notice['id'] in m['Subject'])
     content = httpx.get(os.environ.get('MAILPIT_URL', 'http://mailpit:8025') + '/api/v1/message/' + message['ID'], timeout=10).json()
     assert 'ESCALATION' in content['Text'] and 'not a statutory deadline' in content['Text']

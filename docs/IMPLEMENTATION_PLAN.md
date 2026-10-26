@@ -1,5 +1,21 @@
 # Implementation plan
 
+## Phase 7 — approved Registry UI and public entry screen
+
+Completed locally: final 10-journey browser regression, 88-test PostgreSQL backend suite,
+frontend typecheck/build, scoped desktop/mobile inspection and isolated deployment passed.
+See STATUS.md for exact results and the cold-export/live-browser distinction.
+
+User selected direction A from docs/ui-concepts. Apply white navigation, navy typography,
+cobalt actions, flat data tables and consistent form/evidence/clearance/report layouts.
+Replace the decorative pre-login hero with a restrained institutional entry, clear
+identity-provider continuation, workflow/access information and honest sandbox disclosure.
+Overview uses actual scoped intervention counts and audit events; the register uses the
+existing scoped search API. Keep human gates, OIDC, backend transitions and provenance.
+Acceptance: frontend typecheck/build, real-service browser journeys including mobile home
+and scoped register filtering, relevant PostgreSQL regression, visual/overflow inspection
+across all roles/workspaces, exact evidence record and Git checkpoint.
+
 ## Phase 6 — detailed problem-statement gap closure
 
 Completed locally on 2026-10-27: 88 backend tests, nine browser journeys, a fresh isolated

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { api, exportCsv, type Schemas } from "./api";
 
 type Task = {
@@ -77,6 +77,9 @@ export function OperationsReport({ onOpen }: { onOpen: (id: string) => void }) {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
+  const reportRevision = useRef(0);
+  const policyInstitution = useRef(institution);
+  policyInstitution.current = institution;
   const canManage = bindings.some(
     (b) =>
       b.role === "REVIEWER" &&
@@ -92,9 +95,11 @@ export function OperationsReport({ onOpen }: { onOpen: (id: string) => void }) {
   }).toString();
   const refresh = useCallback(
     async (after = "") => {
+      const revision = ++reportRevision.current;
       const result = await api<Report>(
         `/reports/interventions?${params}${after ? `&after=${after}` : ""}`,
       );
+      if (revision !== reportRevision.current) return;
       setReport(result);
       setSelected((previous) =>
         previous
@@ -105,10 +110,15 @@ export function OperationsReport({ onOpen }: { onOpen: (id: string) => void }) {
     [params],
   );
   const loadPolicy = useCallback(async () => {
-    if (institution)
-      setPolicy(
-        await api<Policy>(`/institutions/${institution}/operations-policy`),
+    if (!institution) return;
+    try {
+      const value = await api<Policy>(
+        `/institutions/${institution}/operations-policy`,
       );
+      if (policyInstitution.current === institution) setPolicy(value);
+    } catch (error) {
+      if (policyInstitution.current === institution) throw error;
+    }
   }, [institution]);
   useEffect(() => {
     Promise.all([
@@ -125,20 +135,31 @@ export function OperationsReport({ onOpen }: { onOpen: (id: string) => void }) {
   useEffect(() => {
     setSelected(null);
     refresh().catch((e) => setError(e.message));
+    return () => {
+      reportRevision.current++;
+    };
   }, [refresh]);
   useEffect(() => {
     loadPolicy().catch((e) => setError(e.message));
   }, [loadPolicy]);
   useEffect(() => {
     if (!selected) return;
+    let active = true;
     const poll = () =>
       api<Notice[]>(`/interventions/${selected.id}/notifications`)
-        .then(setNotices)
-        .catch((e) => setError(e.message));
+        .then((value) => {
+          if (active) setNotices(value);
+        })
+        .catch((e) => {
+          if (active) setError(e.message);
+        });
     setNotices([]);
     poll();
     const timer = setInterval(poll, 3000);
-    return () => clearInterval(timer);
+    return () => {
+      active = false;
+      clearInterval(timer);
+    };
   }, [selected?.id]);
   async function act(task: () => Promise<unknown>, message: string) {
     setBusy(true);
@@ -194,8 +215,11 @@ export function OperationsReport({ onOpen }: { onOpen: (id: string) => void }) {
             aria-label="Intervention institution"
             value={institution}
             onChange={(e) => {
-              setInstitution(e.target.value);
-              setPolicy(null);
+              if (e.target.value !== institution) {
+                setInstitution(e.target.value);
+                setPolicy(null);
+                setSelected(null);
+              }
             }}
           >
             <option value="">All assigned institutions</option>

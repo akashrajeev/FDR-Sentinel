@@ -1,5 +1,66 @@
 # Implementation status
 
+## Phase 7 — approved Registry UI and improved public home
+
+Applied user-selected direction A from the design gallery to the real React portal:
+white rail, navy typography, cobalt controls, flat tables, clearer evidence/form/report
+layouts, keyboard navigation and responsive mobile behavior. The public home now has
+an institutional product introduction, lifecycle/access guidance, one OIDC continuation
+and explicit sandbox boundaries. No credentials or institutional records are fetched
+on the public screen. There are no copied mockup portfolio numbers in the application.
+
+Overview displays actual scoped summaries, intervention/clearance/overdue counts and
+audit activity. The six-row recent preview links to a server-filtered 50-row paginated
+register. Draft creation opens the persisted detail directly; record anchors expose
+evidence, policy, sources, correction and history. Protected loading/error/empty states,
+blocked decisions, source distinction and all existing business permissions remain.
+Implementation scope and rationale: REGISTRY_UI.md.
+
+Executed qualification:
+
+- `npm run build --prefix apps/web`: TypeScript/Vite passed. `ruff check apps/api scripts
+  tests`: passed. Existing dependency audit remains separate from production security.
+- `docker compose --profile test run --rm --no-deps test`: **88 passed, 10 deselected
+  in 112.44s**; `.local/registry-backend-qualified.log`.
+- `.venv\Scripts\python scripts/fresh_acceptance.py --snapshot 20261022T000000Z`:
+  **PASS**, isolated project `sentinel-acceptance-09c87226`, **88 passed, 10 deselected
+  in 56.21s**, readiness passed, **191.25s total**. 143 source files, SHA-256
+  `6cf1309f4cf69069da8d3d38fd547923b893e57fd76489723bbf2e4fd9e4edd3`.
+  This export preceded final navigation and asynchronous-state refinements; those
+  receive live browser verification. No cold-browser or hosted-CI claim. Fresh service
+  logs/volumes are retained in `.local/fresh-acceptance-09c87226`; services stopped.
+- Targeted home/auth/register checks: **2 passed in 21.88s**; final back-navigation
+  recheck **1 passed in 8.88s**. Main workspace desktop/mobile overflow checks passed
+  for Deposits, Institutions, Release cases, Reports and Audit trail. Public home and
+  loaded overview were visually inspected. `.local/registry-qa` retains evidence.
+
+Initial checks encountered stopped services and a host clock rollback that placed
+retained operator grants in the future. Services were restored and time-based access
+checks were preserved until those assignments became active; no grant was backdated,
+no password reset and no authorization bypass were introduced. SMTP tests now search
+their unique Mailpit subject rather than assuming a new email sorts into the latest
+100 retained messages. Mobile table overflow caused by an off-screen label was fixed;
+the first full browser run passed nine journeys and exposed obsolete emoji navigation
+selectors in the tenth, which were updated.
+Subsequent browser regression exposed stale reminder/report responses and an institution
+selector that cleared an already-loaded policy when reselecting the same value. Added
+request-revision guards, immediate reminder filtering, stale policy/notification guards
+and preserved same-institution policy state. The two affected real-service journeys
+passed together: **2 passed in 39.53s** (`.local/registry-browser-fixes.log`). Reminder
+assertions now identify the exact instrument and as-of band, rather than any SENT email.
+
+Final combined command `.venv\Scripts\python scripts/local.py -m pytest -q -m browser`:
+**10 passed, 88 deselected in 189.42s** (`.local/registry-browser-complete.log`). Includes
+actual OIDC, scoped registration/search, uploads/scanning/OCR, independent scrutiny,
+source checks, bureau blocks/issuance, renewal, operator/CSV, SMTP intervention delivery,
+acknowledgement/source resolution and the new public/mobile home. TypeScript/Vite and
+Ruff passed after final application edits. `npm audit --prefix apps/web --audit-level=high`:
+**0 vulnerabilities**; existing production OS/JDK/security qualification remains separate.
+
+The approved local UI milestone is complete and deployed at localhost:8088. API readiness
+is healthy with scanner/worker processing available. No financial state machine,
+authorization rule, regulatory policy coverage or official-integration gate was changed.
+
 ## Phase 6 — detailed problem-statement gap closure (2026-10-27)
 
 Implemented persistent interventions for missing/unsafe proof and release evidence,

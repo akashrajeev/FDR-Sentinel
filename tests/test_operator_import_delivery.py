@@ -120,7 +120,8 @@ def test_actual_smtp_message_in_mailpit_and_replayed_worker_no_duplicate(clients
     assert deliver_one(delivery) == 'SENT'
     assert deliver_one(delivery) == 'NOOP'
     mailbox = os.environ.get('MAILPIT_URL', 'http://mailpit:8025')
-    response = httpx.get(mailbox + '/api/v1/messages', params={'limit': 100}, timeout=10)
+    # Search the unique subject rather than assuming this is among the newest mailbox rows.
+    response = httpx.get(mailbox + '/api/v1/search', params={'query': 'subject:' + notification, 'limit': 100}, timeout=10)
     assert response.status_code == 200
     messages = [m for m in response.json()['messages'] if notification in m['Subject']]
     assert len(messages) == 1

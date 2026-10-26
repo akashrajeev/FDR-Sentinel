@@ -1,5 +1,13 @@
 # Test strategy
 
+Registry UI acceptance adds the public desktop/mobile home, absence of private API
+requests before login, actual OIDC continuation, server-backed record/workflow filtering,
+mobile record layout and return to the full register. All earlier browser workflows
+remain real-service checks. Specific records are found through scoped search rather
+than assuming they are in a six-row overview. Unique Mailpit subject search preserves
+SMTP evidence when a retained mailbox has future-dated entries after a clock rollback.
+Neither tests nor presentation may bypass role validity, stale evidence or human gates.
+
 Phase 6: `tests/test_operations.py` exercises actual PostgreSQL policy history/scope,
 stale/idempotent configuration, missing/unsafe evidence, discrepancy/unknown review,
 actual source NOT_FOUND, bureau/hold follow-up, custom maturity bands, acknowledgement

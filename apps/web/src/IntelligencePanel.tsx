@@ -171,7 +171,7 @@ export function IntelligencePanel({
     doc &&
     pageSizes.length > 0;
   return (
-    <section className="panel">
+    <section className="panel" id="evidence-workspace">
       <div className="section-head">
         <div>
           <h2>Document intelligence & source review</h2>

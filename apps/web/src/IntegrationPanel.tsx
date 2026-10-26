@@ -98,7 +98,7 @@ export function IntegrationPanel({
     }
   };
   return (
-    <section className="panel">
+    <section className="panel" id={depositId ? "source-checks" : undefined}>
       <h3>Connected sandbox systems</h3>
       <p>
         Real API exchanges with independently stored fictional bank and
