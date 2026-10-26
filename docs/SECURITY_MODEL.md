@@ -1,5 +1,14 @@
 # Security model
 
+Operational follow-up grants no financial authority. Only assigned REVIEWERs can change
+an institution's product SLA/supervisor or manually scan/acknowledge. Policies are
+append-only and revision-checked; a supervisor must already have an independent active
+scope. Scheduled scans use current authorization time even for synthetic future-clock
+demonstrations. Recipients are rechecked before SMTP; stale/revoked work is CANCELLED.
+Acknowledgement cannot resolve findings/holds, accept registration or authorize release.
+Case-only report scope does not grant institution access. Exports are audited, formula-safe
+and bounded. Financial rule applicability and production startup gates remain unchanged.
+
 ## SIH connected-service boundary
 
 The bank/AICTE sandbox is a real network service over independently administered

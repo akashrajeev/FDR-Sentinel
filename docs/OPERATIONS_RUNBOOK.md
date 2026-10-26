@@ -1,5 +1,14 @@
 # Local operation and production activation
 
+Operational follow-up: Reports → Interventions and escalation. Assigned reviewers
+configure versioned product SLAs and a different already-scoped supervisor. Celery scans
+each minute; reminders/escalations are durable SMTP work with per-episode deduplication.
+Delivery rechecks task state and recipient access, cancelling stale/revoked work. Failed
+emails expose attempts and scoped retry. An unassigned supervisor is shown explicitly.
+Acknowledgement is follow-up only; source workflow completion resolves the intervention.
+Synthetic clock overrides are bounded and never affect statutory or financial decisions.
+Review PROBLEM_STATEMENT_COVERAGE.md before making production or impact claims.
+
 For current SIH presentation flows use SIH_DEMO_RUNBOOK.md and SIH_ACCEPTANCE.md. The
 independent sandbox now listens on localhost:8092 (separate fixture-admin credential),
 and actual SMTP is captured on localhost:11025 / inbox localhost:8025. Neither is an

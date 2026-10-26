@@ -6,7 +6,7 @@ from sentinel.db import engine
 
 MUTABLE = ('deposit_records', 'documents', 'outbox_events', 'release_cases', 'holds',
            'instrument_relationships', 'extraction_corrections', 'discrepancies',
-           'integration_requests', 'notification_deliveries')
+           'integration_requests', 'notification_deliveries', 'interventions')
 
 
 def provision():

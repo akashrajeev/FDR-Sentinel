@@ -70,6 +70,29 @@ reconcile with an independent bank ledger ID. Show remote request IDs, attempts 
 SANDBOX_COMPLETED or rejection. This is actual network/state processing over fictional
 records; it never sets real RELEASED, makes bank confirmation or moves real money.
 
+## Intervention and escalation judging sequence
+
+Open Reports as an assigned reviewer. Select an institution, open "Configure follow-up
+deadlines and supervisor", select a different already-scoped officer/auditor and save
+the product SLA with a reason. Configure custom maturity day bands here as well.
+Create a fictional deposit without proof, or initiate an independent source check that
+returns NOT_FOUND. Run the intervention scan with an explicit synthetic future clock
+to demonstrate reminders/escalation without waiting days; ordinary Celery scans use real
+time every minute. Filter by category/deposit, inspect source facts, actual SMTP SENT
+status and the matching message in Mailpit. Download the filtered audited intervention CSV.
+
+Acknowledge follow-up and show that it remains OPEN. Upload/process the missing proof or
+complete the source workflow, then scan again: the source-resolved task moves to retained
+RESOLVED history. Superseding proof with an unprocessed revision can create a new episode.
+For clearance/holds, show the corresponding source IDs and bureau; acknowledgement never
+waives those controls. An unassigned/revoked supervisor is not silently treated as notified.
+Dead-letter operational emails have a scoped retry button; delivery rechecks source/access.
+
+Run `.venv\Scripts\python scripts/local.py scripts/benchmark_workflow.py` for an actual
+network comparison over eight fixed synthetic cases. It creates a new fictional
+institution rather than resetting data. Present read counts and measured timings from
+its JSON with the **scripted proxy, not human baseline** limitation. See MEASUREMENTS.md.
+
 ## Repeatable verification
 
 `docker compose --profile test run --rm test` runs the real-service backend suite.

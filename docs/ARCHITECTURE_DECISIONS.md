@@ -1,5 +1,25 @@
 # Architecture decisions
 
+ADR-041: keep follow-up in the monolith. A shared source-derived intervention service
+drives scheduled alerts, supervisor escalation and management reporting. Append-only
+per-institution operational policies define product SLAs, not regulatory deadlines.
+PostgreSQL advisory locks serialize each institution's scan/configuration; a partial
+unique index permits one open task per source condition. Resolved episodes are retained
+and immutable. Acknowledgement cannot clear source blockers or authorize anything.
+
+ADR-042: supervisor selection requires an existing independent scoped reviewer,
+approver or auditor; it grants no role. Resolve recipients from active scopes at scan
+time and recheck before SMTP delivery. Deduplicate by task episode/stage/recipient hash;
+cancel stale/revoked delivery. One real SMTP transport serves maturity and operations.
+Counts are computed over full filtered scope, with bounded keyset pagination and audited
+CSV. Unknown regulatory contexts enter an explicit review queue without widening rules.
+
+ADR-043: compare a scripted per-record inspection proxy with consolidated real API
+reporting over independently labeled synthetic cases. Measure retrieval count, timings
+and error counts; never label an automated proxy as a measured human/manual baseline.
+Production authority, full regulatory applicability and independent security qualification
+remain explicit external acceptance items in PROBLEM_STATEMENT_COVERAGE.md.
+
 ADR-037: use one independent external-system sandbox API with its own PostgreSQL role/
 schema for fictional bank and institution records. Its independently administered data
 is never populated by echoing verification inputs. The core stays a modular monolith.

@@ -28,3 +28,12 @@ Authentication, DB transactions, file storage/scanning, OCR, policy evaluation, 
 human decisions, audit, source HTTP, SMTP and reconciliation code actually execute.
 The old echo-only fixture endpoint remains solely for historical/regression compatibility;
 its interactive success controls have been removed from the presentation UI.
+
+Phase 6 extends D4/D10 with configurable per-institution product deadlines, deduplicated
+SMTP reminders/escalation, source-resolved intervention history and delivery cancellation
+after revocation. Missing documents, pending/conflicting verification, scrutiny,
+discrepancies, bureau tasks, holds, maturity and unknown-policy review have consolidated
+reports with scoped full counts, pagination and audited CSV. The ninth browser journey
+covers policy/supervisor configuration, actual worker/SMTP, acknowledgement, export and
+source resolution. `test_operations.py` covers actual PostgreSQL/concurrency/HTTP and
+SMTP edge cases. STATUS.md records executed results; coverage claims are not test results.

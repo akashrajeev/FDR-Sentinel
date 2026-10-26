@@ -56,7 +56,7 @@ export function ReleaseDesk({
       api<Case[]>("/release-cases"),
       api<Relation[]>("/replacements"),
       api<Notification[]>(
-        `/notifications${notificationFilter ? `?deposit_id=${encodeURIComponent(notificationFilter)}` : ""}`,
+        `/notifications?kind=MATURITY_IN_APP${notificationFilter ? `&deposit_id=${encodeURIComponent(notificationFilter)}` : ""}`,
       ),
       api<Deposit[]>("/deposits"),
     ]);

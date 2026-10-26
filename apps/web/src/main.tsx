@@ -784,7 +784,16 @@ function App() {
               {tab === "Release cases" && (
                 <ReleaseDesk records={records} bindings={me?.bindings ?? []} />
               )}
-              {tab === "Reports" && <Reports />}
+              {tab === "Reports" && (
+                <Reports
+                  onOpen={(id) =>
+                    perform(async () => {
+                      setSelected(await api<Detail>(`/deposits/${id}`));
+                      setTab("Deposits");
+                    }, "Source evidence opened.")
+                  }
+                />
+              )}
               {tab === "Operator" && <OperatorPanel />}
               {tab === "Legacy import" && <LegacyImport onChange={refresh} />}
               {tab === "Audit trail" && (

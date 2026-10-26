@@ -1,5 +1,13 @@
 # FDR Sentinel
 
+Detailed problem-statement follow-up now includes **Reports → Interventions and
+escalation**: missing evidence, pending source verification, overdue reviews, discrepancies,
+bureau tasks, holds and regulatory review; versioned operational deadlines, independent
+supervisor escalation, actual local email and audited CSV. See
+[coverage and remaining external acceptance](docs/PROBLEM_STATEMENT_COVERAGE.md),
+[judging steps](docs/SIH_DEMO_RUNBOOK.md) and [measured proxy comparison](docs/MEASUREMENTS.md).
+These product service levels never authorize financial or regulatory decisions.
+
 SIH26265 · institutional security deposits and FDR workflow platform.
 See [implementation plan](docs/IMPLEMENTATION_PLAN.md), [decisions](docs/ARCHITECTURE_DECISIONS.md)
 and [actual status](docs/STATUS.md). Architecture documents describe intended capabilities;

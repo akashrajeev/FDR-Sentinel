@@ -1,0 +1,14 @@
+{
+  "version": "synthetic-interventions-v1",
+  "limits": "Eight deliberately constructed fictional cases; labels are fixed separately from report output. Scripted per-record inspection is a proxy, not measured human work or real institutional savings.",
+  "cases": [
+    {"name": "missing-proof", "proof": false, "bank": null, "expected": ["MISSING_DOCUMENTS"]},
+    {"name": "ready-proof", "proof": true, "bank": null, "expected": []},
+    {"name": "missing-proof-source-missing", "proof": false, "bank": "NOT_FOUND", "expected": ["MISSING_DOCUMENTS", "PENDING_VERIFICATION"]},
+    {"name": "ready-proof-source-missing", "proof": true, "bank": "NOT_FOUND", "expected": ["PENDING_VERIFICATION"]},
+    {"name": "ready-proof-source-match", "proof": true, "bank": "MATCH", "expected": []},
+    {"name": "missing-proof-source-match", "proof": false, "bank": "MATCH", "expected": ["MISSING_DOCUMENTS"]},
+    {"name": "ready-proof-source-conflict", "proof": true, "bank": "MISMATCH", "expected": ["PENDING_VERIFICATION"]},
+    {"name": "missing-proof-source-conflict", "proof": false, "bank": "MISMATCH", "expected": ["MISSING_DOCUMENTS", "PENDING_VERIFICATION"]}
+  ]
+}

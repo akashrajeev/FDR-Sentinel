@@ -635,6 +635,109 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/institutions/{institution_id}/operations-policy": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Policy */
+    get: operations["policy_api_v1_institutions__institution_id__operations_policy_get"];
+    put?: never;
+    /** Configure */
+    post: operations["configure_api_v1_institutions__institution_id__operations_policy_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/operations/scan": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Scan */
+    post: operations["scan_api_v1_operations_scan_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/reports/interventions": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Report */
+    get: operations["report_api_v1_reports_interventions_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/reports/interventions.csv": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Export */
+    get: operations["export_api_v1_reports_interventions_csv_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/interventions/{identity}/acknowledge": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Acknowledge */
+    post: operations["acknowledge_api_v1_interventions__identity__acknowledge_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/interventions/{identity}/notifications": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Notifications */
+    get: operations["notifications_api_v1_interventions__identity__notifications_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/health/live": {
     parameters: {
       query?: never;
@@ -931,6 +1034,11 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
   schemas: {
+    /** Acknowledgement */
+    Acknowledgement: {
+      /** Reason */
+      reason: string;
+    };
     /** ApprovalIn */
     ApprovalIn: {
       /** Expected Version */
@@ -1343,6 +1451,54 @@ export interface components {
       /** Required Amount Paise */
       required_amount_paise: number | null;
     };
+    /** OperationsSettings */
+    OperationsSettings: {
+      /** Expected Revision */
+      expected_revision: number;
+      /**
+       * Review Hours
+       * @default 24
+       */
+      review_hours: number;
+      /**
+       * Verification Hours
+       * @default 2
+       */
+      verification_hours: number;
+      /**
+       * Discrepancy Hours
+       * @default 24
+       */
+      discrepancy_hours: number;
+      /**
+       * Missing Document Hours
+       * @default 24
+       */
+      missing_document_hours: number;
+      /**
+       * Clearance Hours
+       * @default 48
+       */
+      clearance_hours: number;
+      /**
+       * Escalation Hours
+       * @default 24
+       */
+      escalation_hours: number;
+      /**
+       * Maturity Days
+       * @default [
+       *       90,
+       *       30,
+       *       7
+       *     ]
+       */
+      maturity_days: number[];
+      /** Supervisor Subject */
+      supervisor_subject?: string | null;
+      /** Reason */
+      reason: string;
+    };
     /** PolicyContext */
     PolicyContext: {
       /** Academic Year */
@@ -1503,6 +1659,13 @@ export interface components {
        * @enum {string}
        */
       behavior: "NORMAL" | "DELAYED" | "TRANSIENT_FAILURE";
+    };
+    /** ScanCommand */
+    ScanCommand: {
+      /** Institution Id */
+      institution_id: string;
+      /** As Of */
+      as_of?: string | null;
     };
     /** SimulationIn */
     SimulationIn: {
@@ -2096,6 +2259,7 @@ export interface operations {
     parameters: {
       query?: {
         deposit_id?: string | null;
+        kind?: string | null;
       };
       header?: never;
       path?: never;
@@ -2830,6 +2994,249 @@ export interface operations {
         "application/json": components["schemas"]["Assignment"];
       };
     };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": unknown;
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  policy_api_v1_institutions__institution_id__operations_policy_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        institution_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": unknown;
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  configure_api_v1_institutions__institution_id__operations_policy_post: {
+    parameters: {
+      query?: never;
+      header?: {
+        "idempotency-key"?: string | null;
+      };
+      path: {
+        institution_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["OperationsSettings"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": unknown;
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  scan_api_v1_operations_scan_post: {
+    parameters: {
+      query?: never;
+      header?: {
+        "idempotency-key"?: string | null;
+      };
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["ScanCommand"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": unknown;
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  report_api_v1_reports_interventions_get: {
+    parameters: {
+      query?: {
+        category?: string | null;
+        state?: "OPEN" | "RESOLVED" | "ALL";
+        institution_id?: string | null;
+        deposit_id?: string | null;
+        overdue?: boolean;
+        after?: string | null;
+        limit?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": unknown;
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  export_api_v1_reports_interventions_csv_get: {
+    parameters: {
+      query?: {
+        category?: string | null;
+        state?: "OPEN" | "RESOLVED" | "ALL";
+        institution_id?: string | null;
+        deposit_id?: string | null;
+        overdue?: boolean;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": unknown;
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  acknowledge_api_v1_interventions__identity__acknowledge_post: {
+    parameters: {
+      query?: never;
+      header?: {
+        "idempotency-key"?: string | null;
+      };
+      path: {
+        identity: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["Acknowledgement"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": unknown;
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  notifications_api_v1_interventions__identity__notifications_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        identity: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
     responses: {
       /** @description Successful Response */
       200: {

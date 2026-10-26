@@ -11,7 +11,6 @@ from sqlalchemy.dialects.postgresql import insert
 
 from sentinel.auth import require_decision_assurance
 from sentinel.compliance import POLICY, POLICY_REVISION, document_set_hash
-from sentinel.config import settings
 from sentinel.models import (
     ClearanceDecision,
     Deposit,
@@ -441,7 +440,9 @@ def run_maturity(db, as_of, institution_ids=None, actor='scheduler', request_id=
     created = 0
     for deposit in db.scalars(query.with_for_update(skip_locked=True)):
         days = (deposit.maturity_date - as_of).days
-        thresholds = sorted(set(t for t in settings().maturity_thresholds if t > 0))
+        from sentinel.operations import current_policy
+        reminder_policy, policy_revision = current_policy(db, deposit.institution_id)
+        thresholds = sorted(set(t for t in reminder_policy['maturity_days'] if t > 0))
         if not thresholds:
             raise RuntimeError('At least one positive maturity reminder threshold is required')
         status = 'MATURED' if days <= 0 else 'APPROACHING_MATURITY' if days <= max(thresholds) else 'ACTIVE'
@@ -458,7 +459,8 @@ def run_maturity(db, as_of, institution_ids=None, actor='scheduler', request_id=
                 dedupe_key=f'{deposit.id}:{deposit.maturity_date}:{threshold}', recipient=deposit.maker,
                 kind='MATURITY_IN_APP', detail={'days_remaining': days, 'threshold': threshold,
                                               'as_of': as_of.isoformat(), 'delivery': 'PERSISTED_IN_APP',
-                                              'basis': 'CONFIGURABLE_PRODUCT_POLICY_NOT_STATUTORY'},
+                                              'basis': 'CONFIGURABLE_PRODUCT_POLICY_NOT_STATUTORY',
+                                              'operations_policy_revision': policy_revision},
             ).on_conflict_do_nothing().returning(Notification.id)).scalar_one_or_none()
             if result:
                 from sentinel.delivery import ensure_delivery

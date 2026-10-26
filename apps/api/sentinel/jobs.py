@@ -25,9 +25,20 @@ celery.conf.update(
     broker_transport_options={'visibility_timeout': 300},
     beat_schedule={'outbox': {'task': 'sentinel.publish_outbox', 'schedule': 3.0},
                    'integrations': {'task': 'sentinel.integration_work', 'schedule': 2.0},
-                   'maturity': {'task': 'sentinel.maturity', 'schedule': 3600.0}},
+                   'maturity': {'task': 'sentinel.maturity', 'schedule': 3600.0},
+                   'operations': {'task': 'sentinel.operations', 'schedule': 60.0}},
 )
 logger = logging.getLogger(__name__)
+
+
+@celery.task(name='sentinel.operations')
+@traced('operations.scan')
+def scheduled_operations():
+    from sentinel.operations import scan_all
+    with session_factory()() as db:
+        result = scan_all(db)
+        db.commit()
+        return result
 
 
 @celery.task(name='sentinel.integration_work')

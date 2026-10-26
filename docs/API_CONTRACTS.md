@@ -1,5 +1,24 @@
 # API contracts
 
+Phase 6 operational endpoints (real authenticated API, product SLAs only):
+
+- GET/POST `/institutions/{id}/operations-policy`: scoped read; REVIEWER-only append
+  with expected_revision, reason, bounded hour thresholds, maturity day bands and
+  pre-existing independent supervisor subject. Mutations require Idempotency-Key.
+- POST `/operations/scan`: scoped REVIEWER, institution_id and optional timezone-aware
+  synthetic as_of within ten years. Same transactional service as scheduled Celery.
+- GET `/reports/interventions`: institution/deposit/category/state/overdue filters,
+  after/limit keyset pagination, full filtered counts and next_cursor. Case-only scopes
+  see only assigned-case tasks. Observation time is distinct from report retrieval time.
+- GET `/reports/interventions.csv`: corresponding filters, safe audited CSV capped at
+  10,000 rows; exceeding the cap fails explicitly. Source detail and IDs are retained.
+- POST `/interventions/{id}/acknowledge`: independent REVIEWER institution scope, reason
+  and Idempotency-Key; one acknowledgement per OPEN task, never source resolution.
+- GET `/interventions/{id}/notifications`: scoped reminder/escalation recipients and
+  actual SMTP delivery state/attempts. No foreign institution or platform-operator access.
+- GET `/notifications` accepts an optional kind filter, separating maturity UI from
+  operational notices. All other institution/resource authorization remains mandatory.
+
 ## Connected SIH sandbox, operator and delivery extensions
 
 All portal routes below use the same OIDC/scoped authorization and mutation idempotency

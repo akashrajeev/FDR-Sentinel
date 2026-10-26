@@ -1,13 +1,36 @@
 # Implementation plan
 
+## Phase 6 — detailed problem-statement gap closure
+
+Completed locally on 2026-10-27: 88 backend tests, nine browser journeys, a fresh isolated
+deployment, frontend build and recovery verification passed. See STATUS.md for commands,
+durations and limitations. External production/legal/human-study acceptance remains open.
+
+Dependencies: completed 5A–5C. Add a persistent scoped intervention queue with configurable
+product SLAs, source-based resolution, deduplicated reminders and independent supervisor
+escalation. Cover missing/unsafe evidence, pending/failed verification, overdue scrutiny,
+open discrepancies, bureau clearance, holds, maturity and unknown regulatory contexts.
+Expose filtered/paginated reports, full-scope counts, audited CSV and policy configuration
+in React. Scheduled workers and human-triggered scans share the same transactional service.
+Acceptance: actual PostgreSQL/scope/concurrency/replay tests, actual SMTP content, browser
+policy/report/escalation journey, frontend typecheck/build, clean deployment and Git checkpoint.
+
+Add a reproducible synthetic manual-checklist versus portal-assisted exercise using the
+same independently labeled cases. Report actual measured algorithm/checklist effort,
+accuracy and timings; never claim a measured human baseline or real institutional savings.
+Record a deployment/regulatory acceptance checklist with evidence and explicit external
+owners. Do not expand financial policy applicability or disable production startup gates
+without authorized source review, written integration authority and security qualification.
+
 SIH completion scope was extended on 2026-10-26: real independent bank/AICTE sandbox
 APIs with fictional data, durable source exchanges and reconciliation; actual local
 SMTP; operator assignment and transactional CSV; full browser and clean-source/fresh-
 volume acceptance. See SIH_COMPLETION_PLAN.md for dependencies and STATUS.md for results.
 This work does not wait for production authorization and does not remove production gates.
 Phases 5A, 5B and 5C are complete locally; STATUS.md records the 80-test backend,
-eight-journey browser and clean-deployment acceptance results. The next milestone is
-production activation qualification (Phase 4B), requiring the external inputs listed there.
+eight-journey browser and clean-deployment acceptance results. Phase 6 above extends
+detailed operational coverage; production activation qualification (Phase 4B) remains
+dependent on the external inputs listed there.
 
 Baseline reviewed: ARCHITECTURE.md v1.0, AGENT_START_HERE.md and ARCHITECTURE_SLIDE.svg.
 Assessment date: 2026-10-23 (Asia/Kolkata). ARCHITECTURE_SLIDE.png was not present.

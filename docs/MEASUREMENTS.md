@@ -3,6 +3,42 @@
 These are small synthetic test measurements, not estimates of regulatory impact or
 bank verification accuracy. No manual-process baseline has been measured.
 
+## Phase 6 deployment/recovery qualification (2026-10-27)
+
+A fresh isolated deployment passed **88 backend tests in 67.53s** and readiness;
+complete source-export/build/start/test/readiness duration was **225.45s**. The live
+database regression separately passed **88 tests in 130.07s** while cold services were
+starting on the same computer; these are verification timings, not comparative load results.
+The local snapshot restore verified **27 tables, 2,938 rows, 1,300 audit rows and 185 object
+hashes in 14.59s**, including operational policies/tasks and sandbox data. Source untouched.
+No production RPO/RTO/PITR claim. STATUS.md records exact commands and source-export hash.
+The final live browser regression passed **nine journeys in 215.30s**. Its runtime
+includes scripted role switching, actual worker/network waits and concurrent local
+verification activity; it is not a human task-completion measurement.
+
+## Controlled workflow comparison (2026-10-26)
+
+Command: `.venv\Scripts\python scripts/local.py scripts/benchmark_workflow.py`.
+Actual OIDC/HTTP APIs create a new fictional institution and eight instruments, upload
+four documents through private storage/scanning, and obtain six independent sandbox
+responses. Fixed labels are in `tests/fixtures/operations_ground_truth.json`, separate
+from the report and comparison code. Evidence: `.local/phase6-workflow.json`.
+
+The exercise compares scripted inspection of each record/evidence/source screen with
+one consolidated intervention query over the **same** records. Five iterations after
+setup; only missing-proof and pending/conflicting-verification findings are measured.
+
+| Method | HTTP reads / iteration | Median seconds | Correct findings | False positive / negative |
+|---|---|---|---|---|
+| Scripted per-record inspection proxy | 16 | 0.2085 | 8 / 8 | 0 / 0 |
+| Consolidated intervention report | 1 | 0.0127 | 8 / 8 | 0 / 0 |
+
+The actual monitor scan took **0.0703s**, reported separately rather than hidden in
+query latency. Setup/scanning/source exchanges are excluded from both read timings.
+This demonstrates fewer retrievals and accurate consolidation on eight intentionally
+constructed cases. It is **not** a measured human baseline, production benchmark,
+representative accuracy study or evidence of real-world turnaround/cost savings.
+
 ## Final SIH acceptance (2026-10-26)
 
 The final combined browser run passed **8 tests in 154.91s**. A separate clean source

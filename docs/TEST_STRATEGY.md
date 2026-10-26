@@ -1,5 +1,15 @@
 # Test strategy
 
+Phase 6: `tests/test_operations.py` exercises actual PostgreSQL policy history/scope,
+stale/idempotent configuration, missing/unsafe evidence, discrepancy/unknown review,
+actual source NOT_FOUND, bureau/hold follow-up, custom maturity bands, acknowledgement
+versus resolution, recurrence, concurrent scan deduplication, safe scoped pagination/CSV,
+real SMTP escalation and revoked queued-delivery cancellation. Browser acceptance adds
+policy configuration -> independent escalation -> CSV -> acknowledgement -> READY source
+resolution. `benchmark_workflow.py` uses real network services and fixed synthetic labels;
+its scripted proxy must never be presented as observed human work. Exact actual runs
+are recorded in STATUS.md; this paragraph alone is not passing-test evidence.
+
 SIH completion adds actual HTTP exchanges against a separately persisted sandbox and
 actual SMTP plus Mailpit mailbox-content assertions. Adverse cases include source
 signature/correlation, missing/mismatched data, HTTP 503, delayed result, stale declaration,

@@ -269,7 +269,7 @@ class Notification(Base):
     __tablename__ = 'notifications'
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
     institution_id: Mapped[str] = mapped_column(ForeignKey('institutions.id'), index=True)
-    deposit_id: Mapped[str] = mapped_column(ForeignKey('deposit_records.id'))
+    deposit_id: Mapped[str | None] = mapped_column(ForeignKey('deposit_records.id'))
     dedupe_key: Mapped[str] = mapped_column(String(160), unique=True)
     recipient: Mapped[str] = mapped_column(String(128))
     kind: Mapped[str] = mapped_column(String(32))
@@ -348,7 +348,7 @@ class IntegrationRequest(Base):
 class NotificationDelivery(Base):
     __tablename__ = 'notification_deliveries'
     __table_args__ = (UniqueConstraint('notification_id'),
-        CheckConstraint("state IN ('PENDING','SENT','DEAD_LETTER')"),)
+        CheckConstraint("state IN ('PENDING','SENT','DEAD_LETTER','CANCELLED')"),)
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
     notification_id: Mapped[str] = mapped_column(ForeignKey('notifications.id'))
     state: Mapped[str] = mapped_column(String(20), default='PENDING')
@@ -357,3 +357,38 @@ class NotificationDelivery(Base):
     last_error: Mapped[str | None] = mapped_column(String(80))
     message_id: Mapped[str] = mapped_column(String(128), unique=True)
     delivered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class OperationsPolicy(Base):
+    __tablename__ = 'operations_policies'
+    __table_args__ = (UniqueConstraint('institution_id', 'revision'),)
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
+    institution_id: Mapped[str] = mapped_column(ForeignKey('institutions.id'), index=True)
+    revision: Mapped[int] = mapped_column(Integer)
+    configuration: Mapped[dict] = mapped_column(JSON)
+    actor: Mapped[str] = mapped_column(String(128))
+    reason: Mapped[str] = mapped_column(String(2000))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+
+class Intervention(Base):
+    __tablename__ = 'interventions'
+    __table_args__ = (UniqueConstraint('institution_id', 'condition_key', 'episode'),
+                     CheckConstraint("state IN ('OPEN','RESOLVED')"),)
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
+    institution_id: Mapped[str] = mapped_column(ForeignKey('institutions.id'), index=True)
+    deposit_id: Mapped[str | None] = mapped_column(ForeignKey('deposit_records.id'), index=True)
+    case_id: Mapped[str | None] = mapped_column(ForeignKey('release_cases.id'), index=True)
+    condition_key: Mapped[str] = mapped_column(String(160))
+    episode: Mapped[int] = mapped_column(Integer)
+    category: Mapped[str] = mapped_column(String(40), index=True)
+    state: Mapped[str] = mapped_column(String(16), default='OPEN', index=True)
+    source_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    due_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    observed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    policy_revision: Mapped[int] = mapped_column(Integer)
+    detail: Mapped[dict] = mapped_column(JSON)
+    resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    acknowledged_by: Mapped[str | None] = mapped_column(String(128))
+    acknowledged_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    acknowledgement: Mapped[str | None] = mapped_column(String(2000))

@@ -29,6 +29,21 @@ def deliver_one(identity):
         if not row or row.state != 'PENDING':
             return 'NOOP'
         notification = db.get(Notification, row.notification_id)
+        if notification.kind.startswith('OPERATIONS_'):
+            from sentinel.models import Intervention
+            from sentinel.operations import active_bindings, current_policy
+            task = db.get(Intervention, notification.detail['intervention_id'])
+            allowed = task and task.state == 'OPEN' and any(b.subject == notification.recipient
+                for b in active_bindings(db, task.institution_id, task.case_id))
+            if allowed and notification.kind == 'OPERATIONS_ESCALATION':
+                policy, _ = current_policy(db, task.institution_id)
+                allowed = policy['supervisor_subject'] == notification.recipient
+            if not allowed:
+                row.state, row.last_error = 'CANCELLED', 'SOURCE_RESOLVED_OR_SCOPE_REVOKED'
+                audit(db, notification.institution_id, 'notification-worker', 'OPERATIONS_DELIVERY_CANCELLED',
+                      task.id if task else notification.id, {'notification_id': notification.id}, notification.id)
+                db.commit()
+                return row.state
         row.attempts += 1
         try:
             config = settings()
@@ -38,12 +53,21 @@ def deliver_one(identity):
             message['From'] = 'FDR Sentinel <notifications@sentinel.invalid>'
             recipient = hashlib.sha256(notification.recipient.encode()).hexdigest()[:16]
             message['To'] = recipient + '@sentinel.invalid'
-            message['Subject'] = 'SYNTHETIC maturity alert · ' + notification.id
+            is_operations = notification.kind.startswith('OPERATIONS_')
+            message['Subject'] = ('SYNTHETIC operations alert · ' if is_operations else
+                                  'SYNTHETIC maturity alert · ') + notification.id
             message['Message-ID'] = row.message_id
-            message.set_content('FDR Sentinel synthetic environment — no financial authority.\n'
+            content = ('FDR Sentinel synthetic environment — no financial authority.\n'
                 f'Deposit: {notification.deposit_id}\nDays remaining: {notification.detail.get("days_remaining")}\n'
                 f'Reminder band: {notification.detail.get("threshold")} days.\n'
                 'Maturity does not authorize release. Sign in to inspect your scoped evidence and workflow.')
+            if is_operations:
+                content = ('FDR Sentinel synthetic operations follow-up — product SLA, not a statutory deadline.\n'
+                    f'Intervention: {notification.detail["intervention_id"]}\n'
+                    f'Category: {notification.detail["category"]}\nStage: {notification.detail["stage"]}\n'
+                    f'Due: {notification.detail["due_at"]}\nPolicy revision: {notification.detail["policy_revision"]}\n'
+                    'Sign in to inspect scoped evidence. No automatic approval, release or real money movement.')
+            message.set_content(content)
             with smtplib.SMTP(config.smtp_host, config.smtp_port, timeout=5) as smtp:
                 refused = smtp.send_message(message)
                 if refused:
@@ -57,7 +81,7 @@ def deliver_one(identity):
             row.state = 'DEAD_LETTER' if row.attempts >= 5 else 'PENDING'
             row.next_attempt_at = now() + timedelta(seconds=min(60, 2 ** row.attempts))
             action = 'NOTIFICATION_SMTP_FAILED'
-        audit(db, notification.institution_id, 'notification-worker', action, notification.deposit_id,
+        audit(db, notification.institution_id, 'notification-worker', action, notification.deposit_id or notification.id,
               {'notification_id': notification.id, 'message_id': row.message_id,
                'state': row.state, 'attempts': row.attempts, 'error_type': row.last_error}, notification.id)
         db.commit()

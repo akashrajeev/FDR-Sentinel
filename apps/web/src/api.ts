@@ -129,15 +129,18 @@ export async function previewUrl(id: string, page: number) {
   return URL.createObjectURL(await response.blob());
 }
 
-export async function exportCsv() {
-  const response = await fetch("/api/v1/reports/deposits.csv", {
+export async function exportCsv(
+  path = "/reports/deposits.csv",
+  filename = "synthetic-deposits.csv",
+) {
+  const response = await fetch("/api/v1" + path, {
     headers: { Authorization: `Bearer ${token}` },
   });
   if (!response.ok) throw new Error("Scoped export unavailable");
   const url = URL.createObjectURL(await response.blob());
   const anchor = document.createElement("a");
   anchor.href = url;
-  anchor.download = "synthetic-deposits.csv";
+  anchor.download = filename;
   anchor.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }

@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { api, exportCsv, type Schemas } from "./api";
+import { OperationsReport } from "./OperationsReport";
 
-export function Reports() {
+export function Reports({ onOpen }: { onOpen: (id: string) => void }) {
   const [summary, setSummary] = useState<Schemas["SummaryOut"] | null>(null);
   const [records, setRecords] = useState<Schemas["DepositOut"][]>([]);
   const [query, setQuery] = useState("");
@@ -33,6 +34,7 @@ export function Reports() {
   }, []);
   return (
     <>
+      <OperationsReport onOpen={onOpen} />
       <section className="panel">
         <div className="section-head">
           <div>

@@ -170,7 +170,8 @@ def monitor(body: ClockCommand, request: Request, actor: Actor = Depends(authent
 
 
 @router.get('/notifications')
-def notifications(deposit_id: str | None = None, actor: Actor = Depends(authenticate), db: Session = Depends(get_db)):
+def notifications(deposit_id: str | None = None, kind: str | None = None,
+                  actor: Actor = Depends(authenticate), db: Session = Depends(get_db)):
     def delivery(notification):
         row = db.scalar(select(NotificationDelivery).where(NotificationDelivery.notification_id == notification.id))
         return {'id': row.id, 'state': row.state, 'attempts': row.attempts, 'last_error': row.last_error,
@@ -179,7 +180,8 @@ def notifications(deposit_id: str | None = None, actor: Actor = Depends(authenti
              'delivery': delivery(n),
              'created_at': n.created_at.isoformat()}
             for n in db.scalars(select(Notification).where(Notification.institution_id.in_(
-                actor.institution_ids()), *([Notification.deposit_id == deposit_id] if deposit_id else []))
+                actor.institution_ids()), *([Notification.deposit_id == deposit_id] if deposit_id else []),
+                *([Notification.kind == kind] if kind else []))
                 .order_by(Notification.created_at.desc()).limit(100))]
 
 
@@ -199,7 +201,7 @@ def retry_notification(notification_id: str, body: VersionCommand, request: Requ
         if not delivery or delivery.state != 'DEAD_LETTER' or delivery.attempts != body.expected_version:
             raise HTTPException(409, 'Stale or non-dead-letter notification')
         delivery.state, delivery.attempts, delivery.next_attempt_at = 'PENDING', 0, now()
-        audit(db, row.institution_id, actor.subject, 'NOTIFICATION_RETRY_REQUESTED', row.deposit_id,
+        audit(db, row.institution_id, actor.subject, 'NOTIFICATION_RETRY_REQUESTED', row.deposit_id or row.id,
               {'notification_id': row.id}, request.state.request_id)
         return {'id': delivery.id, 'state': delivery.state}
     return mutate(db, actor, request, idempotency_key, body.model_dump(), action)

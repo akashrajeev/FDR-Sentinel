@@ -1,5 +1,14 @@
 # Requirements and evidence matrix
 
+Detailed gap closure: R13 now includes a persistent intervention queue, missing-document
+and pending-verification reports, review/discrepancy/clearance/hold follow-up, versioned
+product SLAs, real SMTP reminders and independent supervisor escalation. Unsupported
+regulatory contexts are explicit review tasks. R08/R12 apply to policy edits, task
+acknowledgement, exports and recipient authorization. See test_operations.py and the ninth
+browser journey for evidence anchors; STATUS.md records actual results. Controlled proxy
+measurement is in MEASUREMENTS.md. PROBLEM_STATEMENT_COVERAGE.md distinguishes local
+software coverage from external authority, legal applicability and production qualification.
+
 SIH completion scope now includes real independent bank/AICTE sandbox APIs and persistent
 request/response processing (R06/R09/D9/D10), issuer reconciliation after human issuance
 (R07/D7), real local SMTP retries/mailbox evidence (R13/D4/D10), technical operator scope

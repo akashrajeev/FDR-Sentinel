@@ -1,5 +1,67 @@
 # Implementation status
 
+## Phase 6 — detailed problem-statement gap closure (2026-10-27)
+
+Implemented persistent interventions for missing/unsafe proof and release evidence,
+pending/failed/conflicting source checks, scrutiny, unresolved discrepancies, bureau
+clearance, active holds, maturity and unsupported regulatory context. Scheduled Celery
+and manual scoped scans share one service. Product SLAs, maturity bands and independent
+supervisor selection are versioned, reasoned and audited. Deadlines are not statutory.
+Reminders/escalations create durable real SMTP work, deduplicated per episode/recipient;
+delivery rechecks access/task state and cancels obsolete work. Acknowledgement cannot
+resolve source facts or authorize anything. Resolved history remains immutable and
+recurrence gets a new episode.
+
+React Reports now has category/state/institution/deposit/overdue filters, complete scoped
+counts, keyset pagination, source findings, acknowledgement, actual email status/retry,
+policy configuration and audited safe CSV. Existing maturity UI filters its own notice
+kind. Registry-only notices can have no deposit; their audit uses notification identity.
+No genuine financial status, approval gate or regulatory scope was broadened.
+
+An eight-case/five-iteration actual HTTP comparison measured 16 per-record proxy reads
+versus one consolidated report read, both finding all eight fixed expected issues with
+zero false positives/negatives. Medians: 0.2085s proxy, 0.0127s consolidated; monitor scan
+0.0703s separately. This is a scripted synthetic proxy, not a measured human baseline or
+real institutional savings. Ground truth and reproducible script are checked in;
+MEASUREMENTS.md records boundaries. PROBLEM_STATEMENT_COVERAGE.md lists every remaining
+external acceptance item: official authority/contracts, policy-owner applicability,
+production security/operations, real human pilot and hosted CI.
+
+Initial backend regression: **88 passed, 9 deselected in 99.09s**. New browser journey:
+**1 passed, 96 deselected in 23.52s**. Final-source qualification:
+
+- `docker compose --profile test run --rm test`: **88 passed, 9 deselected in 130.07s**;
+  `.local/phase6-backend-qualified.log`. Actual PostgreSQL, IdP, scanner, objects, source
+  HTTP and SMTP; includes registry-only email audit and queued-revocation cancellation.
+- `.venv\Scripts\python scripts/fresh_acceptance.py --snapshot 20261022T000000Z`:
+  **PASS**, 130 source files, fresh isolated project `sentinel-acceptance-8661d638`,
+  **88 passed, 9 deselected in 67.53s**, readiness passed, **225.45s total**. Source hash
+  `c2a16a826195a11d9e562efe274c5d15174707e4952177dd6b053a009a9e9836`.
+  Manifest/logs/volumes retained under `.local/fresh-acceptance-8661d638`; its services
+  stopped after verification and the main stack remained intact. Later documentation
+  edits are outside this export hash. This was backend cold acceptance, not cold browser/hosted CI.
+- Ruff, TypeScript/Vite build, regenerated OpenAPI/TypeScript and diff whitespace checks
+  passed. `npm audit --prefix apps/web --audit-level=high`: **0 vulnerabilities**;
+  this does not supersede the recorded OS/JDK advisory review.
+
+- `.venv\Scripts\python scripts/local.py scripts/restore_drill.py`: **PASS**, public
+  and sandbox schemas, **27 tables, 2,938 rows, 1,300 audit rows, 185 object hashes**,
+  **14.59s**, source untouched. `.local/phase6-restore.json`; local recovery only.
+
+- `.venv\Scripts\python scripts/local.py -m pytest -q -m browser`: **9 passed,
+  88 deselected in 215.30s**; `.local/phase6-browser-qualified.log`. Includes actual
+  policy/supervisor editing, worker SMTP escalation, acknowledgement, filtered CSV,
+  source resolution and the previous eight complete journeys. Screenshots of escalation
+  and resolution were visually reviewed; no layout failure was observed.
+
+The local Phase 6 software milestone is complete. Git checkpoint follows this evidence
+update. The remaining externally dependent acceptance requirements listed in
+PROBLEM_STATEMENT_COVERAGE.md are **not complete**; no official authority, full legal
+applicability, human-study improvement or production-security certification is claimed.
+Intermediate fixture failures (incorrect RETURN enum/helper name and an assertion that
+ignored pagination) were corrected. Additional review fixed the nullable registry
+notification audit edge case and added its actual SMTP regression coverage.
+
 ## Phase 5C — completed SIH end-to-end milestone (2026-10-26)
 
 The SIH milestone is complete with real local services and synthetic records. The React

@@ -1,5 +1,15 @@
 # Database design
 
+Phase 6 adds append-only `operations_policies` (institution, monotonic revision,
+configuration, actor/reason/time) and `interventions` (source condition, episode,
+institution/deposit/case, category, source/due/observation times, policy revision,
+facts, acknowledgement and source resolution). One OPEN episode per condition is enforced
+by a partial unique index; resolved episodes and task identities cannot be rewritten.
+Scans/configuration serialize per institution with a transaction advisory lock. Tasks,
+notifications, delivery work and audit commit atomically. Notification deposit_id may
+be NULL for an institution registry issue. Delivery can be CANCELLED after resolution or
+access revocation; cancellation is not SMTP failure or evidence of reading an email.
+
 ## SIH completion additions
 
 `integration_requests` persists source operation, immutable declaration/policy context,

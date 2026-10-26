@@ -450,3 +450,75 @@ def test_browser_retries_lost_commit_response_without_duplicate_intake():
         assert len(page.get_by_text('READY', exact=True).all()) == 1
         page.screenshot(path='.local/browser/retried-intake.png', full_page=True)
         browser.close()
+
+
+def test_browser_configurable_intervention_escalation_csv_and_source_resolution():
+    from datetime import datetime, timedelta
+
+    from scripts.seed_demo import CONTEXT
+    with portal_client('institution') as maker, portal_client('reviewer') as reviewer, \
+            portal_client('operator') as operator, portal_client('approver') as approver:
+        institution = api_command(maker, '/institutions', {'external_id': 'SYNTHETIC-OPS-' + uuid4().hex[:20],
+            'legal_name': 'Fictional browser follow-up ' + uuid4().hex[:8], 'context': CONTEXT})
+        for client, role in ((reviewer, 'REVIEWER'), (approver, 'APPROVER')):
+            api_command(operator, '/operator/assignments', {'subject': client.get('/me').json()['subject'],
+                'role': role, 'scope_type': 'INSTITUTION', 'scope_id': institution['id'],
+                'reason': 'Assign synthetic browser follow-up scope.'})
+        obligation = api_command(maker, '/obligations', {'institution_id': institution['id'], 'regulatory_event': 'NEW_INSTITUTION'})
+        deposit = api_command(maker, '/deposits', {'obligation_id': obligation['id'], 'deposit_type': 'FDR',
+            'bank_code': 'SYN-OPS', 'reference': 'SYN-OPS-' + uuid4().hex, 'amount_paise': 350000000,
+            'issue_date': '2016-10-01', 'maturity_date': '2026-10-01'})
+        supervisor = approver.get('/me').json()['subject']
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch(channel=os.getenv('BROWSER_CHANNEL', 'chromium'))
+        page = browser.new_page(viewport={'width': 1440, 'height': 1100})
+        errors = []
+        page.on('pageerror', lambda error: errors.append(str(error)))
+        login(page, 'reviewer')
+        page.get_by_role('button', name=re.compile('Reports$')).click()
+        page.get_by_label('Intervention institution', exact=True).select_option(institution['id'])
+        page.get_by_text('Configure follow-up deadlines and supervisor', exact=True).click()
+        page.get_by_label('missing document hours', exact=True).fill('1')
+        page.get_by_label('escalation hours', exact=True).fill('1')
+        page.get_by_label('Escalation supervisor', exact=True).select_option(supervisor)
+        page.get_by_label('Operations policy reason', exact=True).fill('Synthetic judging exercise with independent supervisor.')
+        page.get_by_role('button', name='Save operations policy', exact=True).click()
+        expect(page.get_by_text('Operations policy saved with audit history.', exact=True)).to_be_visible()
+        page.get_by_label('Synthetic operations clock (optional)', exact=True).fill(
+            (datetime.now() + timedelta(hours=3)).isoformat(timespec='minutes'))
+        page.get_by_role('button', name='Run intervention scan', exact=True).click()
+        expect(page.get_by_text('Intervention scan completed; reminders and escalation queued when due.', exact=True)).to_be_visible(timeout=20000)
+        page.get_by_label('Intervention category', exact=True).select_option('MISSING_DOCUMENTS')
+        page.get_by_label('Intervention deposit ID', exact=True).fill(deposit['id'])
+        expect(page.get_by_text('1 matching interventions', exact=True)).to_be_visible()
+        page.get_by_role('button', name=re.compile('Inspect follow-up')).click()
+        expect(page.get_by_text(re.compile('operations escalation.*Email: SENT'))).to_be_visible(timeout=60000)
+        page.get_by_label('Follow-up acknowledgement', exact=True).fill('Asked fictional institution to supply ready proof.')
+        page.get_by_role('button', name='Acknowledge follow-up', exact=True).click()
+        expect(page.get_by_text('Follow-up acknowledged. Source conditions still require resolution.', exact=True)).to_be_visible()
+        expect(page.get_by_text('Acknowledged; source still governs resolution', exact=True)).to_be_visible()
+        with page.expect_download() as event:
+            page.get_by_role('button', name='Export intervention CSV', exact=True).click()
+        download = event.value
+        target = Path('.local/browser/interventions.csv')
+        download.save_as(target)
+        assert 'MISSING_DOCUMENTS' in target.read_text() and deposit['id'] in target.read_text()
+        page.screenshot(path='.local/browser/intervention-escalation.png', full_page=True)
+        with portal_client('institution') as maker:
+            uploaded = maker.post(f"/deposits/{deposit['id']}/documents", files={
+                'file': ('synthetic.pdf', pdf_bytes(), 'application/pdf')}, headers={'Idempotency-Key': str(uuid4())})
+            assert uploaded.status_code == 200
+            deadline = time.monotonic() + 90
+            while time.monotonic() < deadline:
+                detail = maker.get('/deposits/' + deposit['id']).json()
+                if detail['documents'][0]['status'] == 'READY':
+                    break
+                time.sleep(1)
+            assert detail['documents'][0]['status'] == 'READY'
+        page.get_by_role('button', name='Run intervention scan', exact=True).click()
+        expect(page.get_by_text('0 matching interventions', exact=True)).to_be_visible(timeout=20000)
+        page.get_by_label('Intervention state', exact=True).select_option('RESOLVED')
+        expect(page.get_by_text('1 matching interventions', exact=True)).to_be_visible()
+        assert not errors
+        page.screenshot(path='.local/browser/intervention-resolved.png', full_page=True)
+        browser.close()
