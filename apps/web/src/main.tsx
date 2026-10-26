@@ -7,6 +7,8 @@ import { ReleaseDesk } from "./ReleaseDesk";
 import { IntelligencePanel } from "./IntelligencePanel";
 import { Reports } from "./Reports";
 import { IntegrationPanel } from "./IntegrationPanel";
+import { OperatorPanel } from "./OperatorPanel";
+import { LegacyImport } from "./LegacyImport";
 
 type Deposit = Schemas["DepositOut"];
 type Detail = Schemas["DepositDetail"];
@@ -256,6 +258,30 @@ function App() {
             {name}
           </button>
         ))}
+        {me?.bindings.some((b) => b.role === "MAKER") && (
+          <button
+            className={`nav ${tab === "Legacy import" ? "active" : ""}`}
+            onClick={() => {
+              setTab("Legacy import");
+              setSelected(null);
+              setForm("");
+            }}
+          >
+            ⇧ Legacy import
+          </button>
+        )}
+        {me?.bindings.some((b) => b.role === "OPERATOR") && (
+          <button
+            className={`nav ${tab === "Operator" ? "active" : ""}`}
+            onClick={() => {
+              setTab("Operator");
+              setSelected(null);
+              setForm("");
+            }}
+          >
+            ⚙ Operator
+          </button>
+        )}
         <div className="sidebar-bottom">
           <span className="status-dot" />
           {health}
@@ -736,6 +762,8 @@ function App() {
                 <ReleaseDesk records={records} bindings={me?.bindings ?? []} />
               )}
               {tab === "Reports" && <Reports />}
+              {tab === "Operator" && <OperatorPanel />}
+              {tab === "Legacy import" && <LegacyImport onChange={refresh} />}
               {tab === "Audit trail" && (
                 <section className="panel">
                   <h2>Immutable activity trail</h2>

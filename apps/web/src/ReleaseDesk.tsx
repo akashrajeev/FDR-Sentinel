@@ -18,6 +18,13 @@ type Notification = {
   id: string;
   deposit_id: string;
   detail: { days_remaining: number; threshold: number; as_of: string };
+  delivery: {
+    id: string;
+    state: string;
+    attempts: number;
+    last_error: string | null;
+    message_id: string;
+  } | null;
 };
 const label = (value: string) => value.replaceAll("_", " ");
 const short = (value: string) => value.slice(0, 8).toUpperCase();
@@ -85,9 +92,18 @@ export function ReleaseDesk({
     }, "Human action committed with audit evidence.");
   const deposit = records.find((d) => d.id === selected?.deposit_id);
   const maker = selected && has("MAKER", selected.institution_id);
-  const reviewer = selected && has("REVIEWER", selected.institution_id);
-  const approver = selected && has("APPROVER", selected.institution_id);
-  const issuer = selected && has("ISSUER", selected.institution_id);
+  const reviewer =
+    selected &&
+    (has("REVIEWER", selected.institution_id) ||
+      has("REVIEWER", selected.id, "CASE"));
+  const approver =
+    selected &&
+    (has("APPROVER", selected.institution_id) ||
+      has("APPROVER", selected.id, "CASE"));
+  const issuer =
+    selected &&
+    (has("ISSUER", selected.institution_id) ||
+      has("ISSUER", selected.id, "CASE"));
   const evidenceOptions = selected?.documents
     .filter((d) => d.status === "READY")
     .map((d) => (
@@ -260,6 +276,29 @@ export function ReleaseDesk({
                     As of {n.detail.as_of} · {n.detail.threshold}-day band ·
                     persisted in-app
                   </small>
+                  <small>
+                    Email: {n.delivery?.state ?? "PENDING_DELIVERY_SETUP"} ·{" "}
+                    {n.delivery?.attempts ?? 0} attempts
+                  </small>
+                  {n.delivery?.last_error && (
+                    <p className="error">{n.delivery.last_error}</p>
+                  )}
+                  {n.delivery?.state === "DEAD_LETTER" && (
+                    <button
+                      disabled={busy}
+                      onClick={() =>
+                        act(
+                          () =>
+                            api(`/notifications/${n.id}/retry`, {
+                              expected_version: n.delivery!.attempts,
+                            }),
+                          "Email delivery requeued.",
+                        )
+                      }
+                    >
+                      Retry failed email
+                    </button>
+                  )}
                 </div>
               </div>
             ))}

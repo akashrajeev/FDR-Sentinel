@@ -32,8 +32,9 @@ logger = logging.getLogger(__name__)
 
 @celery.task(name='sentinel.integration_work')
 def integration_work():
+    from sentinel.delivery import process_deliveries
     from sentinel.integrations import process_pending
-    return process_pending()
+    return {'integrations': process_pending(), 'notifications': process_deliveries()}
 
 
 @worker_process_init.connect

@@ -19,10 +19,12 @@ from sentinel import services
 from sentinel.auth import Actor, authenticate, require_scope
 from sentinel.config import settings
 from sentinel.db import get_db
+from sentinel.import_api import router as import_router
 from sentinel.integration_api import router as integration_router
 from sentinel.intelligence_api import router as intelligence_router
 from sentinel.lifecycle_api import router as lifecycle_router
 from sentinel.models import AuditEvent, Deposit, Document, Institution, Obligation, Outbox, ReleaseCase
+from sentinel.operator_api import router as operator_router
 from sentinel.reporting_api import router as reporting_router
 from sentinel.schemas import (
     AuditOut,
@@ -52,6 +54,8 @@ app.include_router(lifecycle_router)
 app.include_router(intelligence_router)
 app.include_router(reporting_router)
 app.include_router(integration_router)
+app.include_router(import_router)
+app.include_router(operator_router)
 logger = logging.getLogger('sentinel.http')
 logger.setLevel(logging.INFO)
 if not logger.handlers:

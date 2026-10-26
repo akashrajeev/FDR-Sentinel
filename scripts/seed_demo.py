@@ -11,7 +11,7 @@ CONTEXT = {'academic_year': '2026-27', 'governance': 'PRIVATE', 'programme': 'EN
 
 
 def seed(db):
-    subjects = [f'10000000-0000-0000-0000-{i:012d}' for i in range(1, 10)]
+    subjects = [f'10000000-0000-0000-0000-{i:012d}' for i in range(1, 9)]
     for subject in subjects:
         if not db.get(Principal, subject):
             db.add(Principal(subject=subject))

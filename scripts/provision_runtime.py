@@ -29,6 +29,9 @@ def provision():
         for table in MUTABLE:
             cursor.execute(sql.SQL('GRANT UPDATE ON TABLE {} TO sentinel_runtime').format(sql.Identifier(table)))
         cursor.execute('GRANT UPDATE(registry_status) ON institutions TO sentinel_runtime')
+        cursor.execute("SELECT to_regprocedure('public.operator_assign_scope(text,text,text,text,text,boolean,timestamptz,text,text)')")
+        if cursor.fetchone()[0]:
+            cursor.execute('GRANT EXECUTE ON FUNCTION public.operator_assign_scope(text,text,text,text,text,boolean,timestamptz,text,text) TO sentinel_runtime')
         cursor.execute("""
           CREATE OR REPLACE FUNCTION guard_runtime_scope_grants() RETURNS trigger LANGUAGE plpgsql AS $$
           BEGIN

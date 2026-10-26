@@ -14,7 +14,7 @@ from sqlalchemy.engine import make_url
 
 from sentinel.config import settings
 from sentinel.db import session_factory
-from sentinel.models import Deposit, Document, Institution, IntegrationRequest, now
+from sentinel.models import Deposit, Document, Institution, IntegrationRequest, now, uid
 from sentinel.telemetry import capture_context, propagator
 from sentinel.transactions import audit
 
@@ -67,11 +67,9 @@ def expected_deposit(deposit):
 def enqueue(db, actor, institution, operation, behavior='NORMAL', deposit=None, case=None, ledger_id=None):
     if not institution.external_id.startswith('SYNTHETIC-'):
         raise HTTPException(422, 'Sandbox lookup requires a fictional SYNTHETIC- institution identifier')
-    request = IntegrationRequest(institution_id=institution.id, deposit_id=deposit.id if deposit else None,
+    request = IntegrationRequest(id=uid(), institution_id=institution.id, deposit_id=deposit.id if deposit else None,
         case_id=case.id if case else None, operation=operation, requested_by=actor.subject,
         input_revision=deposit.input_revision if deposit else 1, payload={}, trace_context=capture_context())
-    db.add(request)
-    db.flush()
     expected = expected_deposit(deposit) if deposit else {
         'legal_name': institution.legal_name, 'programme': institution.context['programme'],
         'governance': institution.context['governance']}
@@ -85,6 +83,8 @@ def enqueue(db, actor, institution, operation, behavior='NORMAL', deposit=None, 
         output = db.get(Document, case.output_document_id)
         payload.update(issued_output_sha256=output.sha256, human_issuer=case.issuer)
     request.payload = payload
+    db.add(request)
+    db.flush()
     audit(db, institution.id, actor.subject, 'SANDBOX_' + operation + '_QUEUED', request.id,
           {'deposit_id': request.deposit_id, 'case_id': request.case_id, 'no_financial_authority': True}, request.id)
     return dto(request)
@@ -120,7 +120,7 @@ def result_blockers(db, deposit):
 
 
 def process_one(request_id):
-    with session_factory()() as db:
+    with session_factory()() as db, db.no_autoflush:
         # Same aggregate lock order as decision/worker paths.
         initial = db.get(IntegrationRequest, request_id)
         if not initial:

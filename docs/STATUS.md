@@ -1,5 +1,35 @@
 # Implementation status
 
+## Phase 5B — completed operator, legacy intake and SMTP workflows
+
+Implemented authenticated technical-operator workspace and scoped grants/revocations,
+with no operator self-grants, no financial authority from operator status, and bounded
+validity. A narrowly scoped security-definer database command validates the operator,
+target and scope and writes the assignment/audit atomically; direct runtime role-table
+updates remain forbidden. New institutions can receive officers through the UI.
+
+Added bounded UTF-8 CSV template/preview/commit; typed FDR/RTGS date validation, synthetic
+reference/bank restriction, owner scope, duplicate checks, unchanged-preview hash and
+idempotent transactional all-or-nothing intake. Imported records remain DRAFT.
+
+Added real SMTP delivery into persistent Mailpit, stable Message-ID, deduplicated
+notification work, attempts/backoff/dead letters and scoped human retry. SMTP acceptance
+is not proof a person read mail; crash-after-send can cause at-least-once redelivery.
+SMTP binds localhost:11025 and the test inbox localhost:8025. Initial port 51025 was
+reserved by Windows; changed the local binding rather than altering system reservations.
+
+Executed: `docker compose --profile test run --rm test`: **80 passed**, five browser
+tests deselected, **44.29s**. New tests verify scope assignment/revocation and denials,
+single audited idempotent grant, import preview/rollback/replay, actual message content
+in Mailpit, worker replay without another send, actual refused SMTP connections through
+dead letter and authorized recovery. Frontend TypeScript/Vite build and Ruff passed.
+
+Fixed a failure exposed by integration immutability: implicit ORM autoflush could seal
+SUCCEEDED before completion metadata was assigned. The processor now suppresses
+intermediate autoflush and commits completed evidence in one update. Pending requests
+were recovered through the normal processor (including a correctly STALE response),
+without database edits. Phase 5C browser/fresh-stack acceptance follows.
+
 ## SIH completion extension — 2026-10-26
 
 Phase 5A adds a real HTTP bank/AICTE sandbox backed by independently persisted fictional

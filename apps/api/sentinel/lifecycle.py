@@ -461,6 +461,8 @@ def run_maturity(db, as_of, institution_ids=None, actor='scheduler', request_id=
                                               'basis': 'CONFIGURABLE_PRODUCT_POLICY_NOT_STATUTORY'},
             ).on_conflict_do_nothing().returning(Notification.id)).scalar_one_or_none()
             if result:
+                from sentinel.delivery import ensure_delivery
+                ensure_delivery(db, result)
                 created += 1
                 audit(db, deposit.institution_id, actor, 'MATURITY_ALERT_CREATED', deposit.id,
                       {'notification_id': result, 'threshold': threshold}, request_id)

@@ -124,6 +124,13 @@ services:
     depends_on:
       keycloak: {condition: service_started}
       migrate: {condition: service_completed_successfully}
+  mailpit:
+    image: axllent/mailpit:v1.32.0
+    environment:
+      MP_DATABASE: /data/mailpit.db
+      MP_MAX_MESSAGES: '5000'
+    volumes: [mailpit-data:/data]
+    ports: [127.0.0.1:11025:1025, 127.0.0.1:8025:8025]
   api:
     <<: *app
     command: [uvicorn, 'sentinel.main:app', --host, 0.0.0.0, --port, '8000', --no-access-log]
@@ -186,4 +193,5 @@ volumes:
   keycloak-data-v2:
   clamav-data:
   ollama-data:
+  mailpit-data:
 

@@ -19,7 +19,7 @@ from sentinel.lifecycle_schemas import (
     ReplacementApproval,
     ReplacementIn,
 )
-from sentinel.models import Notification, ReleaseCase, Replacement
+from sentinel.models import Notification, NotificationDelivery, ReleaseCase, Replacement, now
 from sentinel.schemas import DocumentOut, StrictModel, VersionCommand
 from sentinel.transactions import mutate
 
@@ -171,7 +171,34 @@ def monitor(body: ClockCommand, request: Request, actor: Actor = Depends(authent
 
 @router.get('/notifications')
 def notifications(actor: Actor = Depends(authenticate), db: Session = Depends(get_db)):
+    def delivery(notification):
+        row = db.scalar(select(NotificationDelivery).where(NotificationDelivery.notification_id == notification.id))
+        return {'id': row.id, 'state': row.state, 'attempts': row.attempts, 'last_error': row.last_error,
+                'message_id': row.message_id, 'delivered_at': row.delivered_at.isoformat() if row.delivered_at else None} if row else None
     return [{'id': n.id, 'deposit_id': n.deposit_id, 'kind': n.kind, 'detail': n.detail,
+             'delivery': delivery(n),
              'created_at': n.created_at.isoformat()}
             for n in db.scalars(select(Notification).where(Notification.institution_id.in_(
                 actor.institution_ids())).order_by(Notification.created_at.desc()).limit(100))]
+
+
+@router.post('/notifications/{notification_id}/retry')
+def retry_notification(notification_id: str, body: VersionCommand, request: Request,
+                       actor: Actor = Depends(authenticate), db: Session = Depends(get_db),
+                       idempotency_key: str | None = Header(None)):
+    from sentinel.auth import require_scope
+    from sentinel.transactions import audit
+    row = db.get(Notification, notification_id)
+    if not row:
+        raise HTTPException(404, 'Notification not found')
+    require_scope(actor, row.institution_id, ['REVIEWER'])
+    def action():
+        delivery = db.scalar(select(NotificationDelivery).where(NotificationDelivery.notification_id == row.id)
+                             .with_for_update().execution_options(populate_existing=True))
+        if not delivery or delivery.state != 'DEAD_LETTER' or delivery.attempts != body.expected_version:
+            raise HTTPException(409, 'Stale or non-dead-letter notification')
+        delivery.state, delivery.attempts, delivery.next_attempt_at = 'PENDING', 0, now()
+        audit(db, row.institution_id, actor.subject, 'NOTIFICATION_RETRY_REQUESTED', row.deposit_id,
+              {'notification_id': row.id}, request.state.request_id)
+        return {'id': delivery.id, 'state': delivery.state}
+    return mutate(db, actor, request, idempotency_key, body.model_dump(), action)

@@ -20,7 +20,8 @@ environment.update({
     'REDIS_URL': 'redis://127.0.0.1:56379/0', 'S3_ENDPOINT': '127.0.0.1:59000',
     'OIDC_JWKS_URL': 'http://127.0.0.1:8081/realms/sentinel/protocol/openid-connect/certs',
     'CLAMAV_HOST': '127.0.0.1', 'CLAMAV_PORT': '53310', 'TEST_SERVICES': '1',
-    'SANDBOX_URL': 'http://127.0.0.1:8092', 'SMTP_HOST': '127.0.0.1', 'SMTP_PORT': '51025',
+    'SANDBOX_URL': 'http://127.0.0.1:8092', 'SMTP_HOST': '127.0.0.1', 'SMTP_PORT': '11025',
+    'MAILPIT_URL': 'http://127.0.0.1:8025',
     'TEST_OIDC_URL': 'http://127.0.0.1:8081/realms/sentinel/protocol/openid-connect/token',
     'BROWSER_CHANNEL': os.getenv('BROWSER_CHANNEL', 'chrome' if os.name == 'nt' else 'chromium'),
 })
