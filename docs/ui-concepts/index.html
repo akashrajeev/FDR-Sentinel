@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>FDR Sentinel — UI design review</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body data-theme="registry">
+    <header class="review-toolbar">
+      <div>
+        <strong>FDR Sentinel</strong
+        ><span>Design review · 20 views · no live data</span>
+      </div>
+      <div class="directions" aria-label="Visual direction">
+        <button data-theme-choice="registry" aria-pressed="true">
+          A · Registry</button
+        ><button data-theme-choice="ledger" aria-pressed="false">
+          B · Ledger</button
+        ><button data-theme-choice="workbench" aria-pressed="false">
+          C · Workbench
+        </button>
+      </div>
+      <button id="board">View concept image</button>
+    </header>
+    <section class="screen-toolbar">
+      <label
+        >Screen
+        <select id="screen" aria-label="Preview screen"></select></label
+      ><button id="previous" aria-label="Previous screen">←</button
+      ><button id="next" aria-label="Next screen">→</button
+      ><label
+        >State
+        <select id="state">
+          <option value="normal">Normal</option>
+          <option value="empty">Empty</option>
+          <option value="loading">Loading</option>
+          <option value="error">Service failure</option>
+        </select></label
+      ><span id="screen-count"></span
+      ><span class="review-note">Concept only. All actions are previews.</span>
+    </section>
+    <div class="app-shell">
+      <aside class="rail">
+        <div class="brand">
+          <span class="brand-symbol">S</span><strong>FDR Sentinel</strong>
+        </div>
+        <div class="rail-caption">DEPOSIT OPERATIONS</div>
+        <nav id="nav"></nav>
+        <footer>
+          <span class="avatar">RS</span>
+          <div>
+            <strong>R. Sen · Synthetic</strong><small id="role"></small>
+          </div>
+        </footer>
+      </aside>
+      <div class="app-body">
+        <header class="utility">
+          <span id="breadcrumb"></span
+          ><span>Assigned scope <b>Sentinel region</b></span
+          ><span class="environment">Synthetic environment</span>
+        </header>
+        <main id="content"></main>
+        <footer class="app-footer">
+          <span>FDR Sentinel · SIH 2026</span
+          ><span
+            >Policy fixtures provisional · No official financial authority</span
+          >
+        </footer>
+      </div>
+    </div>
+    <dialog id="image-dialog">
+      <button id="close-board">Close concept image ×</button>
+      <p id="board-title"></p>
+      <img id="board-image" alt="Generated visual direction for FDR Sentinel" />
+      <p>
+        Visual inspiration only. Screen layouts in the gallery cover the full
+        workflow; sample image microcopy is illustrative.
+      </p>
+    </dialog>
+    <div id="toast" role="status" aria-live="polite"></div>
+    <script src="gallery.js"></script>
+  </body>
+</html>
