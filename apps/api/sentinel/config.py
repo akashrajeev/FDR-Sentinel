@@ -31,6 +31,11 @@ class Settings(BaseSettings):
     ai_model: str = 'qwen2.5:0.5b'
     mock_attestation_key: str = Field(default='', repr=False)
     maturity_thresholds: tuple[int, ...] = (90, 30, 7)
+    sandbox_url: str = 'http://sandbox:8000'
+    sandbox_api_key: str = Field(default='', repr=False)
+    sandbox_signing_key: str = Field(default='', repr=False)
+    smtp_host: str = 'mailpit'
+    smtp_port: int = 1025
 
 
 @lru_cache

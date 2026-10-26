@@ -38,7 +38,7 @@ class RoleBinding(Base):
     __table_args__ = (
         UniqueConstraint('subject', 'role', 'scope_type', 'scope_id'),
         CheckConstraint("scope_type IN ('INSTITUTION','BUREAU','CASE')"),
-        CheckConstraint("role IN ('MAKER','REVIEWER','AUDITOR','CLEARANCE','APPROVER','ISSUER')"),
+        CheckConstraint("role IN ('MAKER','REVIEWER','AUDITOR','CLEARANCE','APPROVER','ISSUER','OPERATOR')"),
     )
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
     subject: Mapped[str] = mapped_column(ForeignKey('principals.subject'), index=True)
@@ -319,3 +319,41 @@ class VerificationAttestation(Base):
     signature: Mapped[str] = mapped_column(String(64))
     requested_by: Mapped[str] = mapped_column(String(128))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+
+class IntegrationRequest(Base):
+    __tablename__ = 'integration_requests'
+    __table_args__ = (CheckConstraint("operation IN ('BANK_VERIFY','REGISTRY_LOOKUP','CASE_SYNC','RELEASE_ACK')"),
+        CheckConstraint("state IN ('PENDING','WAITING','SUCCEEDED','STALE','DEAD_LETTER')"),)
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
+    institution_id: Mapped[str] = mapped_column(ForeignKey('institutions.id'), index=True)
+    deposit_id: Mapped[str | None] = mapped_column(ForeignKey('deposit_records.id'), index=True)
+    case_id: Mapped[str | None] = mapped_column(ForeignKey('release_cases.id'), index=True)
+    operation: Mapped[str] = mapped_column(String(24))
+    state: Mapped[str] = mapped_column(String(20), default='PENDING', index=True)
+    requested_by: Mapped[str] = mapped_column(String(128))
+    input_revision: Mapped[int] = mapped_column(Integer)
+    payload: Mapped[dict] = mapped_column(JSON)
+    trace_context: Mapped[dict] = mapped_column(JSON, default=dict)
+    remote_id: Mapped[str | None] = mapped_column(String(36))
+    attempts: Mapped[int] = mapped_column(Integer, default=0)
+    next_attempt_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, index=True)
+    last_error: Mapped[str | None] = mapped_column(String(80))
+    result: Mapped[dict | None] = mapped_column(JSON)
+    signature: Mapped[str | None] = mapped_column(String(64))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class NotificationDelivery(Base):
+    __tablename__ = 'notification_deliveries'
+    __table_args__ = (UniqueConstraint('notification_id'),
+        CheckConstraint("state IN ('PENDING','SENT','DEAD_LETTER')"),)
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
+    notification_id: Mapped[str] = mapped_column(ForeignKey('notifications.id'))
+    state: Mapped[str] = mapped_column(String(20), default='PENDING')
+    attempts: Mapped[int] = mapped_column(Integer, default=0)
+    next_attempt_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    last_error: Mapped[str | None] = mapped_column(String(80))
+    message_id: Mapped[str] = mapped_column(String(128), unique=True)
+    delivered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

@@ -16,6 +16,8 @@ x-app: &app
     AI_MODEL: ${AI_MODEL:-qwen2.5:0.5b}
     DECISION_MFA_REQUIRED: ${DECISION_MFA_REQUIRED:-false}
     OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
+    SANDBOX_API_KEY: ${SANDBOX_API_KEY}
+    SANDBOX_SIGNING_KEY: ${SANDBOX_SIGNING_KEY}
   read_only: true
   tmpfs: [/tmp:size=256m]
   cap_drop: [ALL]
@@ -90,12 +92,45 @@ services:
       <<: *app-env
       DATABASE_URL: postgresql+psycopg://sentinel:${POSTGRES_PASSWORD}@postgres:5432/sentinel
       RUNTIME_DB_PASSWORD: ${RUNTIME_DB_PASSWORD}
-    command: [sh, -c, 'alembic upgrade head && python scripts/provision_runtime.py && python scripts/seed_demo.py']
+      SANDBOX_DB_PASSWORD: ${SANDBOX_DB_PASSWORD}
+    command: [sh, -c, 'alembic upgrade head && python scripts/provision_runtime.py && python scripts/provision_sandbox.py && python scripts/seed_demo.py']
+  sandbox:
+    build: .
+    image: fdr-sentinel-api:local
+    command: [uvicorn, sentinel.sandbox_app:app, --host, 0.0.0.0, --port, '8000', --no-access-log]
+    environment:
+      SANDBOX_DATABASE_URL: postgresql+psycopg://sentinel_sandbox:${SANDBOX_DB_PASSWORD}@postgres:5432/sentinel
+      SANDBOX_API_KEY: ${SANDBOX_API_KEY}
+      SANDBOX_ADMIN_KEY: ${SANDBOX_ADMIN_KEY}
+      SANDBOX_SIGNING_KEY: ${SANDBOX_SIGNING_KEY}
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+    ports: [127.0.0.1:8092:8000]
+    read_only: true
+    tmpfs: [/tmp:size=64m]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 5s
+      retries: 30
+  idp-init:
+    image: fdr-sentinel-api:local
+    command: [python, scripts/ensure_operator.py]
+    environment:
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      DEMO_OPERATOR_PASSWORD: ${DEMO_OPERATOR_PASSWORD}
+      OPERATOR_DATABASE_DSN: postgresql://sentinel:${POSTGRES_PASSWORD}@postgres:5432/sentinel
+    depends_on:
+      keycloak: {condition: service_started}
+      migrate: {condition: service_completed_successfully}
   api:
     <<: *app
     command: [uvicorn, 'sentinel.main:app', --host, 0.0.0.0, --port, '8000', --no-access-log]
     depends_on:
       migrate: {condition: service_completed_successfully}
+      idp-init: {condition: service_completed_successfully}
+      sandbox: {condition: service_healthy}
     healthcheck:
       test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health/ready')"]
       interval: 5s
@@ -134,6 +169,9 @@ services:
       DEMO_APPROVER_PASSWORD: ${DEMO_APPROVER_PASSWORD}
       DEMO_ISSUER_PASSWORD: ${DEMO_ISSUER_PASSWORD}
       DEMO_AUDITOR_PASSWORD: ${DEMO_AUDITOR_PASSWORD}
+      DEMO_OPERATOR_PASSWORD: ${DEMO_OPERATOR_PASSWORD}
+      SANDBOX_ADMIN_KEY: ${SANDBOX_ADMIN_KEY}
+      SANDBOX_DB_PASSWORD: ${SANDBOX_DB_PASSWORD}
     command: [python, -m, pytest, -q, -p, 'no:cacheprovider', -m, 'not browser']
   ollama:
     image: ollama/ollama:0.40.10

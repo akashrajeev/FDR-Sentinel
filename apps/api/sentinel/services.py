@@ -237,6 +237,8 @@ def review(db, actor, deposit_id, body, request_id):
         raise HTTPException(403, 'Maker cannot review their own deposit')
     evaluation = current_evaluation(db, deposit)
     if body.decision == 'ACCEPT_REGISTRATION':
+        from sentinel.integrations import require_no_blockers
+        require_no_blockers(db, deposit)
         if evaluation.result['outcome'] == 'FAIL':
             raise HTTPException(409, 'Unresolved substantive blockers prevent acceptance')
         if not body.evidence_reviewed:

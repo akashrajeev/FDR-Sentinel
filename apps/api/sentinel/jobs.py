@@ -24,9 +24,16 @@ celery.conf.update(
     task_time_limit=120, task_soft_time_limit=100, broker_connection_retry_on_startup=True,
     broker_transport_options={'visibility_timeout': 300},
     beat_schedule={'outbox': {'task': 'sentinel.publish_outbox', 'schedule': 3.0},
+                   'integrations': {'task': 'sentinel.integration_work', 'schedule': 2.0},
                    'maturity': {'task': 'sentinel.maturity', 'schedule': 3600.0}},
 )
 logger = logging.getLogger(__name__)
+
+
+@celery.task(name='sentinel.integration_work')
+def integration_work():
+    from sentinel.integrations import process_pending
+    return process_pending()
 
 
 @worker_process_init.connect

@@ -41,6 +41,10 @@ def services_ready():
     owner_engine.dispose()
     subprocess.run([sys.executable, '-m', 'alembic', 'upgrade', 'head'], check=True)
     subprocess.run([sys.executable, 'scripts/provision_runtime.py'], check=True)
+    subprocess.run([sys.executable, 'scripts/provision_sandbox.py'], check=True)
+    subprocess.run([sys.executable, 'scripts/ensure_operator.py'], check=True, env={**os.environ,
+        'IDP_ADMIN_URL': os.environ['TEST_OIDC_URL'].split('/realms/')[0],
+        'OPERATOR_DATABASE_DSN': url.set(drivername='postgresql').render_as_string(hide_password=False)})
     from sentinel.db import session_factory
     from sentinel.storage import storage
 

@@ -6,6 +6,7 @@ import "./style.css";
 import { ReleaseDesk } from "./ReleaseDesk";
 import { IntelligencePanel } from "./IntelligencePanel";
 import { Reports } from "./Reports";
+import { IntegrationPanel } from "./IntegrationPanel";
 
 type Deposit = Schemas["DepositOut"];
 type Detail = Schemas["DepositDetail"];
@@ -215,8 +216,9 @@ function App() {
               Governed by people.
             </h2>
             <p>
-              External bank and AICTE systems are not connected. Policy fixtures
-              are provisional. No actual financial release.
+              Bank and AICTE sandbox APIs use fictional records. Official
+              systems are not connected. Policy fixtures are provisional. No
+              actual financial release.
             </p>
           </div>
         </div>
@@ -291,7 +293,7 @@ function App() {
           </div>
         </header>
         <div className="mode">
-          <span>◈ SYNTHETIC ENVIRONMENT</span> Bank / AICTE: not connected ·
+          <span>◈ SYNTHETIC ENVIRONMENT</span> Bank / AICTE: sandbox APIs ·
           Provisional policy · Human decisions required
         </div>
         <div className="content">
@@ -721,6 +723,11 @@ function App() {
                         <dt>Property</dt>
                         <dd>{display(i.context.land)}</dd>
                       </dl>
+                      <IntegrationPanel
+                        institutionId={i.id}
+                        canRegistry={maker(i.id) || reviewer(i.id)}
+                        onChange={refresh}
+                      />
                     </section>
                   ))}
                 </div>
@@ -1044,6 +1051,16 @@ function App() {
                     </form>
                   </section>
                 )}
+              <IntegrationPanel
+                institutionId={selected.institution_id}
+                depositId={selected.id}
+                version={selected.version}
+                canBank={reviewer(selected.institution_id)}
+                onChange={async () => {
+                  await refresh();
+                  setSelected(await api<Detail>(`/deposits/${selected.id}`));
+                }}
+              />
               <IntelligencePanel
                 record={selected}
                 maker={maker(selected.institution_id)}

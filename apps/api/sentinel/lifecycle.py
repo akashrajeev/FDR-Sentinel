@@ -292,6 +292,8 @@ def resolve_hold(db, actor, case_id, hold_id, body, request_id):
 
 
 def gate_approval(db, case):
+    from sentinel.integrations import require_no_blockers
+    require_no_blockers(db, db.get(Deposit, case.deposit_id))
     if case.policy_revision != POLICY_REVISION:
         raise HTTPException(409, 'Release policy changed; request fresh registration and clearance scrutiny')
     blocking = blockers(db, case)
@@ -351,7 +353,7 @@ def issue_case(db, actor, case_id, body, request_id):
                         f'Case: {case.id}\nDeposit: {case.deposit_id}\n'
                         f'Deposit type: {deposit.deposit_type}\nDeclared INR: {Decimal(deposit.amount_paise) / 100:.2f}\n'
                         f'Approval actor: {case.approver}\nIssuance actor: {actor.subject}\n\n'
-                        'External bank/AICTE verification: NOT CONNECTED.\n'
+                        'External institutions: sandbox only, no official bank/AICTE verification.\n'
                         'Regulatory policy: provisional APH 2024-27 fixture.\n'
                         'This output demonstrates a controlled workflow only.\nNo settlement has occurred.', fontsize=12)
     data = pdf.tobytes()

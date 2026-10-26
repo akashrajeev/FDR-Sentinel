@@ -19,6 +19,7 @@ from sentinel import services
 from sentinel.auth import Actor, authenticate, require_scope
 from sentinel.config import settings
 from sentinel.db import get_db
+from sentinel.integration_api import router as integration_router
 from sentinel.intelligence_api import router as intelligence_router
 from sentinel.lifecycle_api import router as lifecycle_router
 from sentinel.models import AuditEvent, Deposit, Document, Institution, Obligation, Outbox, ReleaseCase
@@ -50,6 +51,7 @@ app = FastAPI(title='FDR Sentinel', version='0.1.0',
 app.include_router(lifecycle_router)
 app.include_router(intelligence_router)
 app.include_router(reporting_router)
+app.include_router(integration_router)
 logger = logging.getLogger('sentinel.http')
 logger.setLevel(logging.INFO)
 if not logger.handlers:

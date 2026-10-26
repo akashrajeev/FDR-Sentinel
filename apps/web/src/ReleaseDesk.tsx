@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { api, download, type Schemas } from "./api";
+import { IntegrationPanel } from "./IntegrationPanel";
 
 type Case = Schemas["ReleaseOut"];
 type Deposit = Schemas["DepositOut"];
@@ -695,6 +696,12 @@ export function ReleaseDesk({
                 >
                   Download synthetic result
                 </button>
+                <IntegrationPanel
+                  institutionId={selected.institution_id}
+                  caseId={selected.id}
+                  version={selected.version}
+                  canRelease={!!issuer}
+                />
               </div>
             )}
           </section>

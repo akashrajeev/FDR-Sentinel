@@ -1,5 +1,27 @@
 # Implementation status
 
+## SIH completion extension — 2026-10-26
+
+Phase 5A adds a real HTTP bank/AICTE sandbox backed by independently persisted fictional
+ledger/registry records in an isolated PostgreSQL schema/role. The portal enqueues
+durable authenticated verification requests, validates signed correlated responses,
+handles pending/transient failures, retains stale results without endorsing new inputs,
+and blocks known conflicting/incomplete checks. Human-issued outputs can be synchronized
+to the case sandbox and reconciled with the bank sandbox. Sandbox completion remains
+separate from real RELEASED/BANK_CONFIRMED, which remain prohibited. Catalogue and
+exchange progress/source records are visible in the React portal.
+
+Executed first run: `docker compose --profile test run --rm test`: **75 passed**, five
+browser tests deselected, **43.98s**. Includes eight new actual-HTTP sandbox tests covering
+matching/mismatched independent data, delays, HTTP 503 recovery, source signature and
+correlation, stale input, source credentials, database-role isolation, and reconciliation
+only after independent human issuance. A focused final-source recheck and frontend build
+are recorded with the checkpoint. Production integration/regulatory activation remains
+separate; Phase 5B operator/CSV/SMTP and Phase 5C full browser/fresh-stack acceptance follow.
+Final-source focused recheck: `.venv\Scripts\python scripts/local.py --test -m pytest
+-q tests/test_sandbox_integrations.py`: **8 passed in 40.13s**. Ruff and frontend
+TypeScript/Vite build passed after the final source changes.
+
 Current scope: complete synthetic local workflows through Phase 3, with Phase 4A local
 operational qualification below. Phase 4B production activation remains blocked. The
 architecture/review are design inputs; this register is the actual evidence record.

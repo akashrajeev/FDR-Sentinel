@@ -5,7 +5,8 @@ from psycopg import sql
 from sentinel.db import engine
 
 MUTABLE = ('deposit_records', 'documents', 'outbox_events', 'release_cases', 'holds',
-           'instrument_relationships', 'extraction_corrections', 'discrepancies')
+           'instrument_relationships', 'extraction_corrections', 'discrepancies',
+           'integration_requests', 'notification_deliveries')
 
 
 def provision():
@@ -27,6 +28,7 @@ def provision():
         cursor.execute('REVOKE INSERT ON alembic_version FROM sentinel_runtime')
         for table in MUTABLE:
             cursor.execute(sql.SQL('GRANT UPDATE ON TABLE {} TO sentinel_runtime').format(sql.Identifier(table)))
+        cursor.execute('GRANT UPDATE(registry_status) ON institutions TO sentinel_runtime')
         cursor.execute("""
           CREATE OR REPLACE FUNCTION guard_runtime_scope_grants() RETURNS trigger LANGUAGE plpgsql AS $$
           BEGIN
