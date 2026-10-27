@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api, exportCsv, type Schemas } from "./api";
 import { OperationsReport } from "./OperationsReport";
+import { isDemo } from "./demo/config";
 
 export function Reports({ onOpen }: { onOpen: (id: string) => void }) {
   const [summary, setSummary] = useState<Schemas["SummaryOut"] | null>(null);
@@ -40,8 +41,9 @@ export function Reports({ onOpen }: { onOpen: (id: string) => void }) {
           <div>
             <h2>Scoped operations report</h2>
             <p>
-              Server-calculated totals across your complete scope; search
-              results are paginated.
+              {isDemo
+                ? "Browser-calculated totals from your synthetic workspace. No server or shared database is involved."
+                : "Server-calculated totals across your complete scope; search results are paginated."}
             </p>
           </div>
           <button onClick={() => exportCsv().catch((e) => setError(e.message))}>

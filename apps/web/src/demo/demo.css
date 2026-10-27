@@ -1,0 +1,75 @@
+.demo-controls {
+  border: 1px solid var(--line, #d5dfed);
+  border-left: 4px solid #3873ec;
+  border-radius: 10px;
+  padding: 20px 24px;
+  margin-bottom: 28px;
+  background: var(--panel, var(--surface, #fff));
+}
+.demo-controls h2 {
+  margin: 2px 0 8px;
+  font-size: 20px;
+}
+.demo-controls p {
+  max-width: 90ch;
+  line-height: 1.6;
+}
+.demo-control-head,
+.demo-scenario-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.demo-control-head {
+  justify-content: space-between;
+}
+.demo-controls .field {
+  min-width: 200px;
+  margin: 0;
+}
+.demo-control-head > div {
+  flex: 1 1 320px;
+}
+.demo-scenario-row {
+  padding: 16px 0;
+}
+.demo-scenario-row > .field {
+  flex: 1 1 250px;
+}
+.demo-controls select {
+  width: 100%;
+}
+.demo-controls details {
+  border-top: 1px solid var(--line, #d5dfed);
+  padding-top: 14px;
+  font-size: 13px;
+}
+.demo-controls summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.demo-guide {
+  padding: 16px;
+  margin: 0 0 16px;
+  background: var(--surface-subtle);
+  border-radius: 8px;
+}
+.demo-guide button + button {
+  margin-left: 10px;
+}
+:root[data-theme="dark"] .demo-controls {
+  background: #101e31;
+}
+:root[data-theme="dark"] .demo-guide {
+  background: #18283e;
+}
+@media (max-width: 600px) {
+  .demo-controls {
+    padding: 16px;
+  }
+  .demo-control-head > .field,
+  .demo-scenario-row > button {
+    width: 100%;
+  }
+}

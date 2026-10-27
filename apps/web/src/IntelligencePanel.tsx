@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api, previewUrl, type Schemas } from "./api";
 import "./intelligence.css";
+import { isDemo } from "./demo/config";
 
 type Annotation = {
   id: string;
@@ -112,7 +113,11 @@ function PdfAnnotator({
     >
       <img
         src={url}
-        alt="Private PDF page preview; drag to select evidence"
+        alt={
+          isDemo
+            ? "Synthetic sample page preview; drag to select evidence"
+            : "Private PDF page preview; drag to select evidence"
+        }
         draggable={false}
       />
       <div

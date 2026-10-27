@@ -1,0 +1,4 @@
+Tool: built-in image_gen, edit with transparent background.
+Reference: logo-concepts-2026-10-28/03-sentinel-monogram.png
+
+Edit target: the attached approved FDR Sentinel third logo concept. Asset type: production app icon. Extract ONLY the existing geometric FS monogram symbol above the words, remove all lettering and all background. Preserve its exact silhouette, proportions, navy-and-cobalt color arrangement, angles, negative spaces and distinctive architectural form. Do not redesign, reinterpret, add strokes, round corners or change the symbol. Clean sharp edges, flat colors matching original. Transparent alpha background, no white rectangle or backdrop, no shadow, no texture, no watermark. Center the isolated symbol in a square canvas with only a small 5% safety margin around its longest dimension. The mark should occupy nearly the entire image height, with no excessive empty padding. Deliver a single isolated monogram, with absolutely no text.

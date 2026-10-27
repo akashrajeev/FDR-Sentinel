@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { Brand, Icon } from "./Icon";
+import { ThemePicker } from "./ThemePicker";
+import { demoOnly, enterDemo } from "./demo/config";
 
 export function LandingPage({
   onSignIn,
@@ -35,6 +37,7 @@ export function LandingPage({
         <span className="project-label">
           SIH 2026 <span>/</span> SIH26265
         </span>
+        <ThemePicker />
       </header>
       <main id="home-content" className="landing-content">
         <section className="landing-hero" aria-labelledby="home-title">
@@ -50,12 +53,18 @@ export function LandingPage({
               case through maturity, renewal and release scrutiny.
             </p>
             <div className="landing-entry">
-              <button className="primary" disabled={entering} onClick={signIn}>
-                {entering ? "Connecting to sign-in…" : "Sign in securely"}
-                <Icon name="arrow" />
+              <button className="primary" onClick={enterDemo}>
+                Explore interactive demo <Icon name="arrow" />
               </button>
+              {!demoOnly && (
+                <button disabled={entering} onClick={signIn}>
+                  {entering ? "Connecting to sign-in…" : "Sign in securely"}
+                  <Icon name="arrow" />
+                </button>
+              )}
               <span>
-                For institution members, assigned officers and auditors.
+                No account needed for the demo. Explore every role with
+                synthetic records.
               </span>
             </div>
             {(failure || error) && (
@@ -64,8 +73,10 @@ export function LandingPage({
               </p>
             )}
             <p className="landing-signin-note">
-              <Icon name="shield" /> You’ll continue to the identity provider to
-              sign in.
+              <Icon name="shield" />{" "}
+              {demoOnly
+                ? "Interactive browser simulation. No live bank connections or financial authority."
+                : "Secure sign-in continues to the identity provider. Demo access stays separate."}
             </p>
           </div>
           <div
@@ -200,12 +211,16 @@ export function LandingPage({
         <section id="demo-environment" className="landing-environment">
           <div>
             <span className="environment-label">DEMONSTRATION ENVIRONMENT</span>
-            <h2>Real workflows. Synthetic records.</h2>
+            <h2>
+              {demoOnly
+                ? "Explore the workflows. Synthetic records."
+                : "Real workflows. Synthetic records."}
+            </h2>
           </div>
           <p>
-            The bank and AICTE connections are independent local sandboxes.
-            Official systems are not connected, policy fixtures are provisional,
-            and no actual financial release takes place.
+            {demoOnly
+              ? "This public demo runs entirely in your browser. Identity, extraction, bank/AICTE responses and processing are simulated. Policy fixtures are provisional and no actual financial release takes place."
+              : "The bank and AICTE connections are independent local sandboxes. Official systems are not connected, policy fixtures are provisional, and no actual financial release takes place."}
           </p>
         </section>
       </main>

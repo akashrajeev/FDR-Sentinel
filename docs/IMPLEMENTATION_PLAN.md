@@ -1,5 +1,20 @@
 # Implementation plan
 
+## Public judging demo — static delivery supplement
+
+Implemented in the existing frontend with a separate Vite demo build and deployed
+to https://fdr-sentinel-demo.vercel.app through the connected Vercel plugin. The
+local build retains OIDC; the public entry offers credential-free demo personas.
+Existing user-facing capabilities have local synthetic representations, including
+failure/retry, independent decisions, documents, imports, reports and operator flows.
+Guided scenarios supplement free exploration. See INTERACTIVE_DEMO.md for coverage
+and STATUS.md for exact local/public qualification and deployment evidence.
+
+The browser simulation does not alter the modular monolith, PostgreSQL, API security,
+transactional audit/outbox, production startup gates or real integration authorization.
+It has no backend connection and makes no claim that browser roles/history replace
+authentication or immutable audit. Production activation remains a separate milestone.
+
 ## Phase 7 — approved Registry UI and public entry screen
 
 Completed locally: final 10-journey browser regression, 88-test PostgreSQL backend suite,

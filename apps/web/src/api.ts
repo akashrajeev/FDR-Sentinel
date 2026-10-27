@@ -4,6 +4,7 @@ import {
   WebStorageStateStore,
 } from "oidc-client-ts";
 import type { components } from "./contracts";
+import { isDemo } from "./demo/config";
 export type Schemas = components["schemas"];
 export const identity = new UserManager({
   authority: "http://localhost:8081/realms/sentinel",
@@ -58,6 +59,8 @@ export async function api<T>(
   method?: string,
   key?: string,
 ): Promise<T> {
+  if (isDemo)
+    return (await import("./demo/engine")).demoApi<T>(path, body, method);
   const headers: Record<string, string> = { Authorization: `Bearer ${token}` };
   const operation = `${method ?? (body === undefined ? "GET" : "POST")} ${path}`;
   const pendingKey =
@@ -106,6 +109,16 @@ export async function api<T>(
   return response.json() as Promise<T>;
 }
 export async function download(id: string) {
+  if (isDemo) {
+    const { demoDocument } = await import("./demo/documents");
+    const url = URL.createObjectURL(await demoDocument(id));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `synthetic-demo-${id}.pdf`;
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    return;
+  }
   const response = await fetch(`/api/v1/documents/${id}/content`, {
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -119,6 +132,7 @@ export async function download(id: string) {
 }
 
 export async function previewUrl(id: string, page: number) {
+  if (isDemo) return (await import("./demo/documents")).demoPreview(id, page);
   const response = await fetch(`/api/v1/documents/${id}/preview/${page}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -133,6 +147,16 @@ export async function exportCsv(
   path = "/reports/deposits.csv",
   filename = "synthetic-deposits.csv",
 ) {
+  if (isDemo) {
+    const { demoCsv } = await import("./demo/engine");
+    const url = URL.createObjectURL(demoCsv(path));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    return;
+  }
   const response = await fetch("/api/v1" + path, {
     headers: { Authorization: `Bearer ${token}` },
   });

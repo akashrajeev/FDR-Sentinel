@@ -1,6 +1,17 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { api, download, type Schemas } from "./api";
 import { IntegrationPanel } from "./IntegrationPanel";
+import { isDemo } from "./demo/config";
+const DemoEvidence = lazy(() =>
+  import("./demo/DemoEvidence").then((m) => ({ default: m.DemoEvidence })),
+);
 
 type Case = Schemas["ReleaseOut"];
 type Deposit = Schemas["DepositOut"];
@@ -34,9 +45,11 @@ const val = (form: HTMLFormElement) =>
 export function ReleaseDesk({
   records: initialRecords,
   bindings,
+  initialCaseId = "",
 }: {
   records: Deposit[];
   bindings: Binding[];
+  initialCaseId?: string;
 }) {
   const [records, setRecords] = useState<Deposit[]>(initialRecords);
   const [cases, setCases] = useState<Case[]>([]);
@@ -47,6 +60,22 @@ export function ReleaseDesk({
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    if (!initialCaseId) {
+      setSelected(null);
+      return;
+    }
+    let active = true;
+    api<Case[]>("/release-cases")
+      .then((rows) => {
+        if (active)
+          setSelected(rows.find((c) => c.id === initialCaseId) ?? null);
+      })
+      .catch((e) => setError(e.message));
+    return () => {
+      active = false;
+    };
+  }, [initialCaseId]);
   const refreshRevision = useRef(0);
   const has = (role: string, id: string, scope = "INSTITUTION") =>
     bindings.some(
@@ -264,9 +293,9 @@ export function ReleaseDesk({
           <section className="panel">
             <h2>Maturity monitor</h2>
             <p>
-              90 / 30 / 7 day reminders are product policy. Alerts persist
-              in-app and are delivered by SMTP to the local test mailbox. No
-              real external recipient is contacted.
+              {isDemo
+                ? "Run the demonstration clock to update maturity states and deduplicated reminders. Email delivery is simulated; no messages are sent."
+                : "90 / 30 / 7 day reminders are product policy. Alerts persist in-app and are delivered by SMTP to the local test mailbox. No real external recipient is contacted."}
             </p>
             {bindings.some((b) => b.role === "REVIEWER") && (
               <form
@@ -523,56 +552,84 @@ export function ReleaseDesk({
                   )}
                 </div>
               ))}
-              {maker && selected.state === "DRAFT" && (
-                <form
-                  className="upload-form"
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    const data = new FormData(e.currentTarget);
-                    act(
-                      () =>
-                        api(`/release-cases/${selected.id}/documents`, data),
-                      "Evidence quarantined for actual scanning.",
-                    );
-                  }}
-                >
-                  <label className="field">
-                    <span>Release evidence category</span>
-                    <select name="category">
-                      {[
-                        "REQUEST_LETTER",
-                        "AFFIDAVIT_6",
-                        "APPROVAL_LETTER",
-                        "CLOSURE_ORDER",
-                        "MERGER_ORDER",
-                        "CONVERSION_ORDER",
-                        "SUPPORTING",
-                        "EXTERNAL_BODY_NOC",
-                      ].map((c) => (
-                        <option key={c}>{c}</option>
-                      ))}
-                    </select>
-                  </label>
-                  <label className="field">
-                    <span>Release PDF</span>
-                    <input
-                      name="file"
-                      type="file"
-                      accept="application/pdf"
-                      required
-                    />
-                  </label>
-                  <button disabled={busy}>Upload release evidence</button>
-                  <button
-                    type="button"
-                    className="primary"
-                    disabled={busy}
-                    onClick={() => command("submit")}
+              {maker &&
+                selected.state === "DRAFT" &&
+                (isDemo ? (
+                  <>
+                    <div className="heading-actions">
+                      <button
+                        disabled={busy}
+                        onClick={() => command("demo-evidence")}
+                      >
+                        Attach demo release evidence
+                      </button>
+                      <button
+                        className="primary"
+                        disabled={busy}
+                        onClick={() => command("submit")}
+                      >
+                        Submit to bureaus
+                      </button>
+                    </div>
+                    <Suspense fallback={null}>
+                      <DemoEvidence
+                        id={selected.id}
+                        release
+                        run={act}
+                        busy={busy}
+                      />
+                    </Suspense>
+                  </>
+                ) : (
+                  <form
+                    className="upload-form"
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      const data = new FormData(e.currentTarget);
+                      act(
+                        () =>
+                          api(`/release-cases/${selected.id}/documents`, data),
+                        "Evidence quarantined for actual scanning.",
+                      );
+                    }}
                   >
-                    Submit to bureaus
-                  </button>
-                </form>
-              )}
+                    <label className="field">
+                      <span>Release evidence category</span>
+                      <select name="category">
+                        {[
+                          "REQUEST_LETTER",
+                          "AFFIDAVIT_6",
+                          "APPROVAL_LETTER",
+                          "CLOSURE_ORDER",
+                          "MERGER_ORDER",
+                          "CONVERSION_ORDER",
+                          "SUPPORTING",
+                          "EXTERNAL_BODY_NOC",
+                        ].map((c) => (
+                          <option key={c}>{c}</option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="field">
+                      <span>Release PDF</span>
+                      <input
+                        name="file"
+                        type="file"
+                        accept="application/pdf"
+                        required
+                      />
+                    </label>
+                    <button disabled={busy}>Upload release evidence</button>
+                    <button
+                      type="button"
+                      className="primary"
+                      disabled={busy}
+                      onClick={() => command("submit")}
+                    >
+                      Submit to bureaus
+                    </button>
+                  </form>
+                ))}
             </section>
             <section className="panel">
               <h2>Independent bureau clearances</h2>

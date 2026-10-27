@@ -1,6 +1,6 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { lazy, Suspense, useCallback, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
-import type { User } from "oidc-client-ts";
+import { User } from "oidc-client-ts";
 import { api, download, identity, setToken, type Schemas } from "./api";
 import "./style.css";
 import { ReleaseDesk } from "./ReleaseDesk";
@@ -11,8 +11,15 @@ import { OperatorPanel } from "./OperatorPanel";
 import { LegacyImport } from "./LegacyImport";
 import { Brand, Icon } from "./Icon";
 import { LandingPage } from "./LandingPage";
+import { ThemePicker } from "./ThemePicker";
 import { DepositRegister } from "./DepositRegister";
 import { AttentionQueue, OverviewMetrics, RecentActivity } from "./Overview";
+import { isDemo, demoOnly } from "./demo/config";
+import type { Persona } from "./demo/model";
+const DemoControls = lazy(() => import("./demo/DemoControls"));
+const DemoEvidence = lazy(() =>
+  import("./demo/DemoEvidence").then((m) => ({ default: m.DemoEvidence })),
+);
 
 type Deposit = Schemas["DepositOut"];
 type Detail = Schemas["DepositDetail"];
@@ -88,8 +95,24 @@ function App() {
   const [audit, setAudit] = useState<Schemas["AuditOut"][]>([]);
   const [form, setForm] = useState("");
   const [kind, setKind] = useState("FDR");
+  const [demoCase, setDemoCase] = useState("");
+  const [demoRevision, setDemoRevision] = useState(0);
+  const demoUser = (role: string) =>
+    new User({
+      access_token: "",
+      token_type: "DEMO",
+      profile: {
+        sub: `demo-${role}`,
+        iss: "browser-demo",
+        aud: "browser-demo",
+        exp: 4102444800,
+        iat: 0,
+        preferred_username: `Demo ${role}`,
+      },
+    });
 
   const navigate = (name: string) => {
+    setDemoCase("");
     setTab(name);
     setSelected(null);
     setForm("");
@@ -99,6 +122,16 @@ function App() {
 
   useEffect(() => {
     (async () => {
+      if (isDemo) {
+        const engine = await import("./demo/engine");
+        setUser(demoUser(engine.currentPersona()));
+        setAuthReady(true);
+        return;
+      }
+      if (demoOnly) {
+        setAuthReady(true);
+        return;
+      }
       try {
         const authenticated =
           window.location.pathname === "/callback"
@@ -120,8 +153,11 @@ function App() {
       setToken("");
       setNotice("Session expired. Sign in again.");
     };
-    identity.events.addAccessTokenExpired(expired);
-    return () => identity.events.removeAccessTokenExpired(expired);
+    if (!isDemo && !demoOnly) identity.events.addAccessTokenExpired(expired);
+    return () => {
+      if (!isDemo && !demoOnly)
+        identity.events.removeAccessTokenExpired(expired);
+    };
   }, []);
 
   const refresh = useCallback(async () => {
@@ -140,9 +176,11 @@ function App() {
     setObligations(d);
     setAudit(e);
     setSummary(s);
-    const h = await fetch("/api/v1/health/ready").then((r) => r.json());
+    const h = isDemo
+      ? { status: "Browser simulation" }
+      : await fetch("/api/v1/health/ready").then((r) => r.json());
     setHealth(display(h.status));
-  }, [user]);
+  }, [user, demoRevision]);
   useEffect(() => {
     refresh().catch((e) => setError(e.message));
   }, [refresh]);
@@ -272,14 +310,16 @@ function App() {
         <div className="sidebar-bottom">
           <span className="status-dot" data-ready={health === "ready"} />
           {health}
-          <p>SIH26265 · Development</p>
+          <p>SIH26265 · {isDemo ? "Interactive demo" : "Development"}</p>
           <button
             className="logout"
             onClick={() =>
-              identity.signoutRedirect({ id_token_hint: user.id_token })
+              isDemo
+                ? window.location.assign("/")
+                : identity.signoutRedirect({ id_token_hint: user.id_token })
             }
           >
-            <Icon name="logout" /> Sign out
+            <Icon name="logout" /> {isDemo ? "Exit demo" : "Sign out"}
           </button>
         </div>
       </aside>
@@ -289,6 +329,7 @@ function App() {
             Workspace <span>/</span> {tab}
           </div>
           <div className="user">
+            <ThemePicker />
             <span className="avatar">
               {String(user.profile.preferred_username ?? "U")
                 .slice(0, 1)
@@ -305,11 +346,58 @@ function App() {
             </div>
           </div>
         </header>
-        <div className="mode">
-          <span>Synthetic environment</span> Bank / AICTE sandboxes ·
-          Provisional policy · Human approval required
-        </div>
+        {isDemo ? (
+          <div className="mode">
+            <span>Interactive demo</span> Synthetic data · Processing simulated
+            · Saved in this browser only
+          </div>
+        ) : (
+          <div className="mode">
+            <span>Synthetic environment</span> Bank / AICTE sandboxes ·
+            Provisional policy · Human approval required
+          </div>
+        )}
         <div className="content" id="workspace-content">
+          {isDemo && (
+            <Suspense fallback={<p>Loading demo controls…</p>}>
+              <DemoControls
+                revision={audit[0]?.id ?? String(demoRevision)}
+                onRole={async (role: Persona) => {
+                  const engine = await import("./demo/engine");
+                  engine.switchPersona(role);
+                  setUser(demoUser(role));
+                  setMe(await api<Me>("/me"));
+                  setError("");
+                  setNotice("");
+                }}
+                onReset={async () => {
+                  (await import("./demo/engine")).resetDemo();
+                  setSelected(null);
+                  setDemoCase("");
+                  navigate("Overview");
+                  setUser(demoUser("reviewer"));
+                  setDemoRevision((n) => n + 1);
+                }}
+                onScenario={async (target, role) => {
+                  const engine = await import("./demo/engine");
+                  engine.switchPersona(role);
+                  setUser(demoUser(role));
+                  setMe(await api<Me>("/me"));
+                  setError("");
+                  setNotice("");
+                  setForm("");
+                  if (target.startsWith("case")) {
+                    setSelected(null);
+                    setTab("Release cases");
+                    setDemoCase(target);
+                  } else if (target.startsWith("fdr")) {
+                    setTab("Deposits");
+                    setSelected(await api<Detail>(`/deposits/${target}`));
+                  } else navigate(target);
+                }}
+              />
+            </Suspense>
+          )}
           <div className="page-heading">
             <div>
               <p className="eyebrow">INSTITUTIONAL SECURITY DEPOSITS</p>
@@ -330,14 +418,16 @@ function App() {
             </div>
             {!selected && (
               <div className="heading-actions">
-                <button
-                  onClick={() => {
-                    setForm("institution");
-                    setTab("Institutions");
-                  }}
-                >
-                  + Onboard institution
-                </button>
+                {(!isDemo || me?.bindings.some((b) => b.role === "MAKER")) && (
+                  <button
+                    onClick={() => {
+                      setForm("institution");
+                      setTab("Institutions");
+                    }}
+                  >
+                    + Onboard institution
+                  </button>
+                )}
                 {me?.bindings.some((b) => b.role === "MAKER") && (
                   <button
                     className="primary"
@@ -671,7 +761,11 @@ function App() {
                 </div>
               )}
               {tab === "Release cases" && (
-                <ReleaseDesk records={records} bindings={me?.bindings ?? []} />
+                <ReleaseDesk
+                  records={records}
+                  bindings={me?.bindings ?? []}
+                  initialCaseId={demoCase}
+                />
               )}
               {tab === "Reports" && (
                 <Reports
@@ -687,8 +781,16 @@ function App() {
               {tab === "Legacy import" && <LegacyImport onChange={refresh} />}
               {tab === "Audit trail" && (
                 <section className="panel">
-                  <h2>Immutable activity trail</h2>
-                  <p>Latest 100 events in your institutional scope.</p>
+                  <h2>
+                    {isDemo
+                      ? "Demonstration activity history"
+                      : "Immutable activity trail"}
+                  </h2>
+                  <p>
+                    {isDemo
+                      ? "Browser-local history is editable and resettable. The real backend uses database-protected audit records."
+                      : "Latest 100 events in your institutional scope."}
+                  </p>
                   {audit.map((a) => (
                     <div key={a.id} className="audit-row">
                       <span className="status-dot" />
@@ -697,6 +799,12 @@ function App() {
                         <small>
                           {a.actor} · {short(a.aggregate_id)}
                         </small>
+                        {isDemo && (
+                          <details>
+                            <summary>View event evidence</summary>
+                            <pre>{JSON.stringify(a.detail, null, 2)}</pre>
+                          </details>
+                        )}
                       </div>
                       <time>{new Date(a.created_at).toLocaleString()}</time>
                     </div>
@@ -741,7 +849,11 @@ function App() {
                 <section className="panel" id="record-evidence">
                   <div className="section-head">
                     <h2>Document evidence</h2>
-                    <span className="muted">Private · originals retained</span>
+                    <span className="muted">
+                      {isDemo
+                        ? "Bundled synthetic samples"
+                        : "Private · originals retained"}
+                    </span>
                   </div>
                   {selected.documents.length === 0 && (
                     <p>No proof uploaded yet.</p>
@@ -766,7 +878,9 @@ function App() {
                             )
                           }
                         >
-                          Download original ↗
+                          {isDemo
+                            ? "Download sample PDF ↗"
+                            : "Download original ↗"}
                         </button>
                       )}
                       {d.evidence.map((e, index) => (
@@ -782,7 +896,24 @@ function App() {
                     </div>
                   ))}
                   {maker(selected.institution_id) &&
-                    selected.workflow === "DRAFT" && (
+                    selected.workflow === "DRAFT" &&
+                    (isDemo ? (
+                      <>
+                        <button
+                          disabled={busy}
+                          onClick={() => command("demo-evidence")}
+                        >
+                          Attach demo sample proof
+                        </button>
+                        <Suspense fallback={null}>
+                          <DemoEvidence
+                            id={selected.id}
+                            run={perform}
+                            busy={busy}
+                          />
+                        </Suspense>
+                      </>
+                    ) : (
                       <form
                         className="upload-form"
                         onSubmit={(e) => {
@@ -830,7 +961,7 @@ function App() {
                         </Field>
                         <button disabled={busy}>Upload privately</button>
                       </form>
-                    )}
+                    ))}
                 </section>
                 <section className="panel" id="policy-review">
                   <div className="section-head">

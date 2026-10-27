@@ -1,4 +1,8 @@
 .env
+.env.*
+!.env.example
+!.env.template
+uploads/
 .local/
 .venv/
 __pycache__/
@@ -7,6 +11,8 @@ __pycache__/
 *.pyc
 node_modules/
 dist/
+dist-demo/
+.vercel/
 coverage/
 playwright-report/
 test-results/

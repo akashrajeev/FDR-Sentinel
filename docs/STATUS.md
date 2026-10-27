@@ -1,5 +1,240 @@
 # Implementation status
 
+## GitHub publication checkpoint (2026-10-28)
+
+Prepared the existing source history and pending theme, interactive-demo and branding
+work for `https://github.com/akashrajeev/FDR-Sentinel`. Git Credential Manager and the
+connected GitHub profile identify `akashrajeev`; `git ls-remote` succeeded with no
+remote refs before publication. The local branch is `main`, with `origin` set to
+that repository. Repository-local author/committer identity is Akash Rajeev
+`<akashrajeev.313@gmail.com>`; all 13 pre-existing commits have that same sole identity
+and no co-author trailers. No history rewrite was needed.
+
+Expanded `.gitignore` for `.env.*` variants (allowing example/template files) and
+upload folders. Publication candidates and reachable history contain no prohibited
+environment/upload/key paths, recognizable GitHub/AWS/private-key patterns, or matches
+for the 16 generated local credential values. These bounded checks are not a formal
+security audit. Ignored credentials, generated documents and local artifacts stay local.
+
+Executed qualification before the source checkpoint:
+
+- `npm run typecheck --prefix apps/web`: passed.
+- `npm run build --prefix apps/web`: passed, 53 modules, Vite 2.75s.
+- `npm run build:demo --prefix apps/web`: passed, 53 modules, Vite 2.78s.
+- `docker compose --profile test run --rm --no-deps test`: **88 passed,
+  10 deselected, 1 existing dependency warning in 126.98s**, actual PostgreSQL and
+  local services using the existing backend image; backend source is unchanged.
+- `$env:DEMO_BASE_URL='http://127.0.0.1:4174'; .venv/Scripts/python -m pytest
+  tests/test_demo_browser.py -q -x`: **10 passed, 1 existing dependency warning in
+  65.74s**, against the freshly built static demo and existing local preview server.
+- `.venv/Scripts/ruff check apps/api scripts tests`: passed.
+- `git -c core.whitespace=blank-at-eol,blank-at-eof diff --check`: passed;
+  existing CRLF normalization notices only.
+
+No hosted Actions result is claimed by these local checks. Real-service browser
+journeys were not rerun for this Git configuration checkpoint; prior evidence remains
+below. Production activation and regulatory/integration authorization limits remain.
+
+## Selected FS logo — local and public identity (2026-10-28)
+
+Applied the user's selected third logo concept to the shared Brand component on
+the public entry and workspace sidebar. Prepared a transparent navy/cobalt mark
+using built-in image generation from the approved reference; source, prompt and
+usage notes are retained in docs/branding/. The runtime asset is
+`apps/web/public/brand/fdr-sentinel-monogram-v1.png`. The existing SVG favicon now
+uses a compact geometric adaptation, with a versioned favicon URL. Dark mode uses
+a light backing so the approved colors remain legible. Application workflows,
+authentication and browser simulation behavior are unchanged.
+
+The static package allowlist now explicitly admits this PNG and excludes `/brand/`
+from the SPA fallback. It still packages only compiled frontend/branding assets.
+No source uploads, credentials or private documents are included.
+
+Executed evidence:
+
+- `npm run typecheck --prefix apps/web`: passed.
+- `npm run build:demo --prefix apps/web`: passed, 53 modules, Vite 3.27s.
+- `docker compose up -d --build --no-deps web`: passed; regular TypeScript/Vite
+  production build passed (4.50s Vite), local portal updated with service data retained.
+- `docker compose --profile test run --rm --no-deps test`: **88 passed,
+  10 deselected, 1 existing dependency warning in 134.74s**, actual PostgreSQL/services.
+- `$env:DEMO_BASE_URL='http://127.0.0.1:4174'; .venv/Scripts/python -m pytest
+  tests/test_demo_browser.py -q -x -k 'mobile_dark or pgrc_to_independent'`:
+  **2 passed, 8 deselected, 1 warning in 19.59s**.
+- `.venv/Scripts/python scripts/local.py -m pytest -q -m browser tests/test_browser.py
+  -k 'registry_home_mobile or real_pkce'`: **2 passed, 9 deselected,
+  1 warning in 24.70s**, actual OIDC and upload/worker scrutiny path.
+- Ad hoc Chrome brand QA: landing/workspace at 1440px and 390px, light and dark,
+  no document overflow, image decoded and visible, PNG served as actual PNG,
+  updated favicon fetched successfully. Screenshots in `.local/brand-qa/` visually
+  inspected. `.venv/Scripts/ruff check apps/api scripts tests` and `git diff --check`
+  passed (existing CRLF normalization notices only).
+- `python scripts/package_demo.py`: **11 files / 1,095,048 bytes**, snapshot SHA-256
+  `56421250afa49d4c2639f49d3c628678debb6bca7d381521e02eea34bc8dfcfe`.
+  Connected Vercel deployment `dpl_DfqyGAqoGQV2vRLERcdMJi2LcUrR` is **READY** on the
+  existing `fdr-sentinel-demo` project, production alias
+  https://fdr-sentinel-demo.vercel.app . All ten publicly served asset SHA-256
+  digests match the tested package, including the logo PNG and favicon.
+- Same targeted demo command with
+  `$env:DEMO_BASE_URL='https://fdr-sentinel-demo.vercel.app'`: **2 passed,
+  8 deselected, 1 existing dependency warning in 13.00s**. Anonymous access,
+  mobile/dark mode and independent synthetic issuance passed on the public build.
+  No hosted CI or source commit is claimed.
+
+## Public browser demo — Vercel
+
+Implemented a separate static demo build in the existing React application. The
+local entry retains real OIDC sign-in and adds **Explore interactive demo**; the
+public build exposes credential-free demo entry. Shared screens use a dynamically
+loaded browser simulation rather than a backend token or global fetch interception.
+Nine named personas and fourteen seeded instruments cover the visible application
+features; scenario shortcuts are optional, and users can navigate freely.
+
+Implemented synthetic registration/onboarding, conservative obligation evaluation,
+evidence return/correction, OCR/advisory proposals with independent confirmation,
+sample page annotations, quarantine/rejection/processing failure/retry, stale-policy
+revalidation, source checks and delayed/retry/dead-letter exchanges, independent
+clearances and holds, separate approval/issuer, NOC vs sanction PDFs, sandbox receipt
+simulation, renewal lineage, configurable maturity bands, intervention/SLA/supervisor
+settings, acknowledgement/escalation, simulated mailbox/delivery retry, operator
+grant/revoke, CSV validation/preview/atomic rollback/import, pagination and complete
+exports. Browser history exposes invalidated clearance evidence and is explicitly
+resettable. Theme and mobile layouts reuse the existing implementation.
+
+PDF files are read locally for size/magic-header/SHA-256 checks. Recognized synthetic
+examples receive explicitly simulated processing; unrecognized PDFs remain quarantined
+without invented extraction and are not retained. CSV input is synthetic-only. No
+uploaded file contents, backend runtime, credentials or configuration enter the
+deployment. No bank confirmation, actual email, official issuance, payment, immutable
+browser audit, real OIDC authentication, production qualification or broader regulatory
+coverage is claimed by the static simulation. See INTERACTIVE_DEMO.md for the feature
+mapping and operating commands. Existing in-progress theme/video changes were preserved.
+
+Executed qualification:
+
+- `npm run typecheck --prefix apps/web`: passed on final source.
+- `npm run build --prefix apps/web`: passed; final production build also passed inside
+  `docker compose up -d --build --no-deps web`. Local portal updated at localhost:8088
+  with existing service data preserved. `npm run build:demo --prefix apps/web`: passed,
+  final output 53 modules, no bundling warnings, 1.91s Vite build.
+- `docker compose --profile test run --rm --no-deps test`: **88 passed, 10 deselected,
+  1 existing dependency deprecation warning in 198.52s** against real PostgreSQL and
+  services. This uses the existing backend image; no backend source changed. Browser
+  demo tests are qualified separately from the host against the static build.
+- `.venv/Scripts/python scripts/local.py -m pytest -q -m browser tests/test_browser.py`:
+  **11 passed, 1 warning in 193.20s** on the shared UI after initial demo wiring.
+  Deployment smoke after the shared UI changes using the same command with
+  `-k 'registry_home_mobile or real_pkce'`: **2 passed, 9 deselected, 1 warning in 17.15s**.
+- `$env:DEMO_BASE_URL='http://127.0.0.1:4174'; .venv/Scripts/python -m pytest
+  tests/test_demo_browser.py -q -x`: **10 passed, 1 warning in 70.70s**. Real Chrome,
+  all instrument types, blocked/rejected/held release paths, independent issuance,
+  PDF content and rendering, corrections, retries, revalidation, actual local file
+  intake/CSV rollback, grants/revocation, SLA/escalation, visitor isolation, storage
+  fallback and mobile overflow. No backend or OIDC requests observed.
+- Final output-branch review corrected RPGF to use the NOC label, consistent with
+  its existing issuer UI. The same demo command with
+  `-k 'new_case_return or pgrc_to_independent'`: **2 passed, 8 deselected, 1 warning
+  in 15.04s** on the final local build, including an actual downloaded RPGF NOC.
+- `.venv/Scripts/ruff check apps/api scripts tests` and `git diff --check`: passed.
+  Git only reported existing CRLF normalization notices. Desktop and dark mobile
+  screenshots plus the rendered synthetic NOC were visually inspected.
+- Initial browser qualification fixes: exact-text selectors matched combined step
+  labels or duplicate finding text; selectors narrowed. A real scenario-navigation
+  issue retained an open release case when switching to the maturity list; clearing
+  the requested case now restores that list. Subsequent expanded local suite passed.
+
+Deployment through the connected Vercel plugin:
+
+- Project `fdr-sentinel-demo`, id `prj_4RWS4vZCFA149R2OO6FhshQTc1JQ`, existing Hobby
+  account/workspace. No paid backend resources or third-party integrations created.
+- Final deployment `dpl_R9CtkkjTeeLPTJegXFW9SGug4DUz`: **READY**, production, static files.
+  Public canonical URL: https://fdr-sentinel-demo.vercel.app . Fresh unauthenticated
+  HTTP returned **200**; the longer generated deployment/team URLs retain Vercel
+  authentication. No deployment protection was disabled.
+- `python scripts/package_demo.py`: packaged **10 files / 483,161 bytes** from the
+  compiled demo plus hosting configuration. Snapshot SHA-256
+  `a4753bb9f9b786cfcd3ccfadf6cd6805c4ec82fd27f3e50309d4a0ea1fb04726`.
+  All nine publicly served asset SHA-256 digests match the local package. The local
+  manifest and all PDFs/screenshots/exports remain ignored under `.local/`.
+- First scoped file upload returned Vercel 403 for missing workspace consent. The
+  user approved the provider-generated one-time link; retry succeeded on the same
+  connection. The resulting deployment contains compiled frontend assets only.
+- Initial public-URL browser qualification: **10 passed, 1 warning in 83.69s**.
+  Final public regression after the RPGF output-label correction:
+  `$env:DEMO_BASE_URL='https://fdr-sentinel-demo.vercel.app'; .venv/Scripts/python
+  -m pytest tests/test_demo_browser.py -q -x`: **10 passed, 1 existing dependency
+  warning in 78.80s**. Fresh anonymous Chrome contexts require no Vercel or application
+  credentials. All observed backend/OIDC requests and browser page errors remained
+  absent. The final downloaded RPGF document contains SAMPLE NOC and no SAMPLE SANCTION.
+
+No hosted CI execution or source commit is implied. Deployment is the tested working
+tree artifact, including the pre-existing theme changes. Future updates require a new
+qualified demo build/package/deployment; automatic Git deployment is not configured.
+
+## Dark theme and narrated demo
+
+Added a shared Device / Light / Dark selector on the public home and authenticated
+workspace. The device preference applies by default and reacts to changes; an explicit
+choice is stored under a theme-only localStorage key and synchronized across tabs.
+An early document script applies the palette before React renders. The shared palette
+covers forms, tables, semantic badges/notices, evidence, source payloads and reports;
+original PDF page previews retain their document colors. Theme storage failures do
+not prevent the selector from working on the current page. OIDC and authorization
+behavior remain unchanged.
+
+Executed application qualification:
+
+- `npm run typecheck --prefix apps/web`: passed.
+- `npm run build --prefix apps/web`: TypeScript/Vite passed after final formatting.
+- `.venv/Scripts/ruff check apps/api scripts tests`: passed.
+- `git diff --check`: passed (Git reported only the existing CRLF normalization notices).
+- `docker compose --profile test run --rm --no-deps test`: **88 passed, 10 deselected,
+  1 dependency deprecation warning in 86.87s**. Actual PostgreSQL/services; this container
+  test image preceded the additional browser-only theme test. No backend source changed.
+- `.venv/Scripts/python scripts/local.py -m pytest -q -m browser -k color_theme`:
+  **1 passed, 98 deselected in 8.78s**. Device changes, explicit preference, reload,
+  cross-tab updates, all six workspaces, mobile overflow and denied theme storage.
+- `$env:PYTHONPATH = (Get-Location).Path + '/.local'; .venv/Scripts/python scripts/local.py
+  -m pytest -q -m browser -p capture_plugin`: **11 passed, 88 deselected in 169.00s**.
+  The local-only plugin selects a dark browser color scheme and saves extra viewport
+  and bounded-panel screenshots; it does not mock APIs or alter workflow assertions.
+- `docker compose up -d --build --no-deps web`: final source image built and deployed
+  to localhost:8088, preserving all existing service data.
+
+The initial theme browser check exposed an ambiguous select label; an explicit
+accessible label fixed it. The denied-storage fixture was narrowed to the theme key
+so it exercises the theme fallback without preventing the pre-existing OIDC library
+from initializing. All final browser journeys passed; no auth workaround was added.
+
+Created `.local/sentinel-demo/`, an editable **240-second, 1920 × 1080** HyperFrames
+walkthrough with 12 chapters and actual captured application screens. Stock Indian
+English narration (Aditya/Orca), generated word timestamps, separate subtitles, an
+original ducked electronic score and a clipping-free reference audio mix are included.
+The full workflow, pending-PGRC block, separate human decisions, sandbox distinction,
+audit and measured local test evidence appear. See DEMO_VIDEO.md for timings and
+reproducible local commands. Media remains ignored; no credentials or uploads enter Git.
+
+Final composition qualification (HyperFrames 0.8.192):
+
+- `npx hyperframes lint`: **0 errors, 0 warnings**.
+- `npx hyperframes check --at 0,8,27,46,65,85,107,128,148,168,186,208,225,236 --json`:
+  **PASS**, exit 0. Lint, runtime, layout, motion and contrast each have **0 errors
+  and 0 warnings**. Four craft readability warnings concern small metadata/labels
+  (20–25px), reviewed in full-size snapshots; primary reading callouts are 28px or
+  larger. Layout information identifies intentional screenshot crops and the
+  0.45-second scene crossfades. `.local/sentinel-demo/qa-final.json` retains details.
+- `npx hyperframes snapshot --at 8,27,46,65,85,107,128,148,168,186,208,225,236`:
+  all chapters and closing frame visually reviewed. A second snapshot pass at
+  `0,65,85,148,168,208,236` verified first-frame visibility, restored safety text,
+  enlarged callouts and final screenshot framing after fixes. No blank/missing
+  product frames or unintentional text overlap was observed.
+- `npx hyperframes preview --background --port 3017 --no-open` and
+  `npx hyperframes preview --status --json`: background Studio is **running/ready**
+  at http://localhost:3017/#project/sentinel-demo. Codex queued the browser-open request.
+
+This is a local Studio preview handoff; no MP4 or new cold-deployment/hosted-CI run
+is implied. Production activation remains separate.
+
 ## Phase 7 — approved Registry UI and improved public home
 
 Applied user-selected direction A from the design gallery to the real React portal:

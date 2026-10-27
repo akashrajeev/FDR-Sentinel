@@ -579,3 +579,66 @@ def test_browser_registry_home_mobile_access_and_live_register_filters():
         page.get_by_role('button', name='← All deposits', exact=True).click()
         expect(page.get_by_label('Search deposit records', exact=True)).to_be_visible()
         browser.close()
+
+
+def test_browser_color_theme_system_override_persistence_and_workspace():
+    output = Path('.local/theme-qa')
+    output.mkdir(parents=True, exist_ok=True)
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch(channel=os.getenv('BROWSER_CHANNEL', 'chromium'))
+        context = browser.new_context(viewport={'width': 1440, 'height': 1000}, color_scheme='dark')
+        page = context.new_page()
+        errors = []
+        page.on('pageerror', lambda error: errors.append(str(error)))
+        page.goto('http://localhost:8088')
+        theme = page.get_by_label('Color theme', exact=True)
+        expect(theme).to_have_value('system')
+        expect(page.locator('html')).to_have_attribute('data-theme', 'dark')
+        page.screenshot(path=str(output / 'home-dark.png'), full_page=True)
+        theme.select_option('light')
+        page.reload()
+        expect(theme).to_have_value('light')
+        expect(page.locator('html')).to_have_attribute('data-theme', 'light')
+        page.emulate_media(color_scheme='dark')
+        expect(page.locator('html')).to_have_attribute('data-theme', 'light')
+        theme.select_option('system')
+        expect(page.locator('html')).to_have_attribute('data-theme', 'dark')
+        page.emulate_media(color_scheme='light')
+        expect(page.locator('html')).to_have_attribute('data-theme', 'light')
+        theme.select_option('dark')
+        other = context.new_page()
+        other.goto('http://localhost:8088')
+        other.get_by_label('Color theme', exact=True).select_option('light')
+        expect(page.locator('html')).to_have_attribute('data-theme', 'light')
+        theme.select_option('dark')
+        login(page, 'reviewer')
+        expect(theme).to_have_value('dark')
+        expect(page.locator('html')).to_have_attribute('data-theme', 'dark')
+        for name in ('Overview', 'Deposits', 'Institutions', 'Release cases', 'Reports', 'Audit trail'):
+            page.get_by_role('button', name=name, exact=True).first.click()
+            expect(page.get_by_role('heading', level=1)).to_be_visible()
+            assert page.evaluate('document.documentElement.scrollWidth <= innerWidth')
+            page.screenshot(path=str(output / (name.lower().replace(' ', '-') + '-dark.png')))
+        page.set_viewport_size({'width': 390, 'height': 844})
+        assert page.evaluate('document.documentElement.scrollWidth <= innerWidth')
+        page.screenshot(path=str(output / 'workspace-mobile-dark.png'), full_page=True)
+        theme.select_option('light')
+        expect(page.locator('html')).to_have_attribute('data-theme', 'light')
+        assert not errors, errors
+        # A locked-down browser can still use the control for this page.
+        restricted = browser.new_context(color_scheme='dark')
+        restricted.add_init_script("""const originalGet = Storage.prototype.getItem;
+            Storage.prototype.getItem = function(key) {
+                if (key === 'sentinel-theme') throw new Error('blocked');
+                return originalGet.call(this, key);
+            };
+            const originalSet = Storage.prototype.setItem;
+            Storage.prototype.setItem = function(key, value) {
+                if (key === 'sentinel-theme') throw new Error('blocked');
+                return originalSet.call(this, key, value);
+            };""")
+        locked = restricted.new_page()
+        locked.goto('http://localhost:8088')
+        locked.get_by_label('Color theme', exact=True).select_option('light')
+        expect(locked.locator('html')).to_have_attribute('data-theme', 'light')
+        browser.close()

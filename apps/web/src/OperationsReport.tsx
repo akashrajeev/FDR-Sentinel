@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api, exportCsv, type Schemas } from "./api";
+import { isDemo } from "./demo/config";
 
 type Task = {
   id: string;
@@ -271,7 +272,9 @@ export function OperationsReport({ onOpen }: { onOpen: (id: string) => void }) {
           checked={overdue}
           onChange={(e) => setOverdue(e.target.checked)}
         />{" "}
-        Overdue only (current real time)
+        {isDemo
+          ? "Overdue only (demo date: 27 October 2026)"
+          : "Overdue only (current real time)"}
       </label>
       <button
         disabled={busy}

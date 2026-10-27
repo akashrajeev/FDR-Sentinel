@@ -4,11 +4,25 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1.0" />
     <meta name="theme-color" content="#2258c4" />
+    <script>
+      (() => {
+        let preference;
+        try {
+          preference = localStorage.getItem("sentinel-theme");
+        } catch {}
+        document.documentElement.dataset.theme =
+          preference === "dark" ||
+          (preference !== "light" &&
+            matchMedia("(prefers-color-scheme: dark)").matches)
+            ? "dark"
+            : "light";
+      })();
+    </script>
     <meta
       name="description"
       content="Institutional security deposit and FDR management with protected evidence, scoped review and controlled lifecycle workflows."
     />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=fs-monogram-1" />
     <title>FDR Sentinel · Deposit operations</title>
   </head>
   <body>

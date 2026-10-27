@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "./api";
+import { isDemo } from "./demo/config";
 
 type Exchange = {
   id: string;
@@ -99,11 +100,13 @@ export function IntegrationPanel({
   };
   return (
     <section className="panel" id={depositId ? "source-checks" : undefined}>
-      <h3>Connected sandbox systems</h3>
+      <h3>
+        {isDemo ? "Simulated source checks" : "Connected sandbox systems"}
+      </h3>
       <p>
-        Real API exchanges with independently stored fictional bank and
-        institution records. Sandbox evidence does not certify real bank
-        authenticity or regulatory approval.
+        {isDemo
+          ? "Browser-only sample responses. No network exchange with a bank or AICTE occurs. Delay and retry choices illustrate outcomes; they do not test transport resilience."
+          : "Real API exchanges with independently stored fictional bank and institution records. Sandbox evidence does not certify real bank authenticity or regulatory approval."}
       </p>
       {error && (
         <p className="error" role="alert">
