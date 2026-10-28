@@ -1,7 +1,9 @@
 # FDR Sentinel engineering contract
 
 Read AGENT_START_HERE.md, ARCHITECTURE.md and docs/IMPLEMENTATION_PLAN.md.
-Architecture is a proposal; docs/STATUS.md records actual implemented/tested status.
+ARCHITECTURE.md is the current implementation map; docs/ARCHITECTURE_BLUEPRINT.md is
+the historical proposal. docs/STATUS.md records historical implemented/tested status,
+and docs/VERIFICATION.md records the current CI diagnosis and local review checks.
 Keep a modular monolith, PostgreSQL, OIDC, explicit transitions, scoped authorization,
 transactional audit/outbox and idempotency. Never invent financial/regulatory approval.
 Use synthetic records only. No real bank/AICTE connector without written authorization.
