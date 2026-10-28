@@ -381,12 +381,40 @@ def test_browser_scanned_evidence_annotation_and_simulated_bank():
         officer.get_by_label('Independent correction reason', exact=True).fill('Scanned original amount and bounded region independently inspected and confirmed.')
         officer.get_by_role('button', name='Record correction decision', exact=True).click()
         expect(officer.get_by_text('CONFIRMED', exact=True)).to_be_visible()
-        officer.get_by_role('button', name='Run current evaluation').click()
         from test_sandbox_integrations import fixture_ledger
         ledger = fixture_ledger({**record, 'amount_paise': 400000000})
         officer.get_by_label('Independent bank ledger ID', exact=True).fill(ledger)
         officer.get_by_label('Sandbox transport behavior', exact=True).select_option('TRANSIENT_FAILURE')
-        officer.get_by_role('button', name='Request independent bank check', exact=True).click()
+        bank_button = officer.get_by_role('button', name='Request independent bank check', exact=True)
+        expect(bank_button).to_be_enabled()
+        # Hold the detail request until the disabled-state assertion has run.
+        checked_refresh = []
+        detail_url = f"**/api/v1/deposits/{record['id']}"
+        def hold_detail(route):
+            if route.request.method == 'GET':
+                # The new version cannot reach the UI until this request is released.
+                expect(bank_button).to_be_disabled()
+                checked_refresh.append(True)
+            route.continue_()
+        officer.route(detail_url, hold_detail)
+        try:
+            with officer.expect_response(lambda r: r.url.endswith(f"/api/v1/deposits/{record['id']}")
+                                         and r.request.method == 'GET') as refreshed:
+                with officer.expect_response(lambda r: r.url.endswith(f"/api/v1/deposits/{record['id']}/evaluate")
+                                             and r.request.method == 'POST') as evaluation:
+                    officer.get_by_role('button', name='Run current evaluation').click()
+                assert evaluation.value.status == 200
+            assert refreshed.value.status == 200
+            assert checked_refresh
+        finally:
+            officer.unroute(detail_url, hold_detail)
+        # Parent busy ends only after the refreshed deposit version has been rendered.
+        expect(officer.get_by_role('button', name='Run current evaluation')).to_be_enabled()
+        expect(bank_button).to_be_enabled()
+        with officer.expect_response(lambda r: r.url.endswith(f"/api/v1/deposits/{record['id']}/bank-check")
+                                     and r.request.method == 'POST') as bank_check:
+            bank_button.click()
+        assert bank_check.value.status == 200
         expect(officer.get_by_text('MISMATCH', exact=True)).to_be_visible(timeout=45000)
         expect(officer.get_by_text('INSTITUTION DECLARED', exact=True)).to_be_visible()
         officer.get_by_role('heading', name='Document intelligence & source review').scroll_into_view_if_needed()

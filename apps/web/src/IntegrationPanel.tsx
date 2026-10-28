@@ -31,6 +31,7 @@ export function IntegrationPanel({
   institutionId,
   depositId,
   version = 1,
+  parentBusy = false,
   caseId,
   canRegistry = false,
   canBank = false,
@@ -40,6 +41,7 @@ export function IntegrationPanel({
   institutionId: string;
   depositId?: string;
   version?: number;
+  parentBusy?: boolean;
   caseId?: string;
   canRegistry?: boolean;
   canBank?: boolean;
@@ -86,6 +88,7 @@ export function IntegrationPanel({
     return () => clearInterval(timer);
   }, [refresh]);
   const command = async (path: string, payload: unknown) => {
+    if (parentBusy || busy) return;
     setBusy(true);
     setError("");
     try {
@@ -151,7 +154,7 @@ export function IntegrationPanel({
           </label>
           {canRegistry && (
             <button
-              disabled={busy}
+              disabled={parentBusy || busy}
               onClick={() =>
                 command(`/institutions/${institutionId}/registry-check`, {
                   behavior,
@@ -163,7 +166,7 @@ export function IntegrationPanel({
           )}
           {canBank && (
             <button
-              disabled={busy || !ledger}
+              disabled={parentBusy || busy || !ledger}
               onClick={() =>
                 command(`/deposits/${depositId}/bank-check`, {
                   expected_version: version,
@@ -178,7 +181,7 @@ export function IntegrationPanel({
           {canRelease && (
             <>
               <button
-                disabled={busy}
+                disabled={parentBusy || busy}
                 onClick={() =>
                   command(`/release-cases/${caseId}/sandbox-exchange`, {
                     expected_version: version,
@@ -189,7 +192,7 @@ export function IntegrationPanel({
                 Send case to AICTE sandbox
               </button>
               <button
-                disabled={busy || !ledger}
+                disabled={parentBusy || busy || !ledger}
                 onClick={() =>
                   command(`/release-cases/${caseId}/sandbox-exchange`, {
                     expected_version: version,
@@ -236,7 +239,7 @@ export function IntegrationPanel({
               )}
               {r.state === "DEAD_LETTER" && (canBank || canRelease) && (
                 <button
-                  disabled={busy}
+                  disabled={parentBusy || busy}
                   onClick={() =>
                     command(`/integration-requests/${r.id}/retry`, {
                       expected_version: r.attempts,
