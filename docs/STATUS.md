@@ -1,3 +1,5 @@
+> Historical evidence register. Current hosted CI diagnosis and review checks are in [VERIFICATION.md](VERIFICATION.md); earlier local passes do not establish current hosted CI success.
+
 # Implementation status
 
 ## GitHub publication checkpoint (2026-10-28)
