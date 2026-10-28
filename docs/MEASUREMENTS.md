@@ -1,3 +1,7 @@
+> Historical evidence register. Current hosted CI diagnosis and review checks are in [VERIFICATION.md](VERIFICATION.md); earlier local passes do not establish current hosted CI success.
+
+> Corpus clarification: four generated same-layout variants contain 16 expected fields in total. Repeated executions are not independent samples. The controlled 16-to-1 comparison counts HTTP GET reads for interventions, not SQL queries or human register work.
+
 # Executed measurements
 
 These are small synthetic test measurements, not estimates of regulatory impact or
