@@ -1146,6 +1146,7 @@ function App() {
                 institutionId={selected.institution_id}
                 depositId={selected.id}
                 version={selected.version}
+                parentBusy={busy}
                 canBank={reviewer(selected.institution_id)}
                 onChange={async () => {
                   await refresh();
