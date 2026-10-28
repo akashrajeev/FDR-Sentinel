@@ -1,165 +1,142 @@
 # FDR Sentinel
 
-Detailed problem-statement follow-up now includes **Reports → Interventions and
-escalation**: missing evidence, pending source verification, overdue reviews, discrepancies,
-bureau tasks, holds and regulatory review; versioned operational deadlines, independent
-supervisor escalation, actual local email and audited CSV. See
-[coverage and remaining external acceptance](docs/PROBLEM_STATEMENT_COVERAGE.md),
-[judging steps](docs/SIH_DEMO_RUNBOOK.md) and [measured proxy comparison](docs/MEASUREMENTS.md).
-These product service levels never authorize financial or regulatory decisions.
+**SIH26265 | A traceable workspace for institutional security deposits.**
 
-SIH26265 · institutional security deposits and FDR workflow platform.
-See [implementation plan](docs/IMPLEMENTATION_PLAN.md), [decisions](docs/ARCHITECTURE_DECISIONS.md)
-and [actual status](docs/STATUS.md). Architecture documents describe intended capabilities;
-the status register records executed evidence. This is a synthetic local system, not an
-authorized AICTE/bank integration or regulatory certification.
+FDR Sentinel brings deposit records, proof documents, scrutiny, maturity follow-up and
+release cases into one role-scoped workflow. Institutions submit evidence; independent
+officers review it; the system retains the source, decision, reason and history.
 
-## Local deployment
+This repository contains a working local application and a separate browser simulation.
+The local application uses real authentication, storage, scanning, OCR, database
+transactions and network exchanges over **fictional institutions and instruments**.
+Bank/AICTE exchanges use an independent fictional sandbox, not authorized external systems.
+APH 2024-27 rules are provisional. No real funds move, and no regulatory approval is claimed.
 
-Requires Docker Compose, Python 3.12+ and Node 24 (Node needed for development/type generation).
+## Start with the right demonstration
 
-```powershell
+| Track | What it demonstrates | What it does not prove |
+|---|---|---|
+| Local full stack, `http://localhost:8088` | Keycloak login, private evidence, ClamAV/Tesseract processing, human decisions, durable jobs, sandbox HTTP and local SMTP | Authorized bank or AICTE integration, production security or legal suitability |
+| [Interactive browser demo](https://fdr-sentinel-demo.vercel.app) | Credential-free exploration of shared screens with named synthetic personas | Backend execution, authentic documents, real email or external verification |
+
+For a judging walkthrough, use the [judge guide](docs/JUDGE_GUIDE.md). For exact steps,
+use the [demo runbook](docs/SIH_DEMO_RUNBOOK.md). For historical executed checks and their
+limits, see [status](docs/STATUS.md) and [measurements](docs/MEASUREMENTS.md).
+
+## Why this exists
+
+Deposit handling is more than storing a PDF. A reviewer needs to know which obligation a
+record covers, which proof is current, whether an independent source agrees, which
+clearances are missing, and who can make the next decision. Separate spreadsheets and
+message threads make that history hard to reconstruct.
+
+FDR Sentinel keeps those questions linked to a single case without making the machine the
+approver. It complements existing online application processes; it is not presented as
+the first online AICTE release portal.
+
+## Architecture
+
+![FDR Sentinel implementation architecture](docs/images/architecture-overview.jpg)
+
+[Read the current architecture](ARCHITECTURE.md) for component responsibilities, durable
+work, security boundaries and the distinction between implemented and proposed features.
+The supplied diagram describes the local system. External source exchanges are fictional;
+AI remains advisory and never approves.
+
+## What the application covers
+
+| Workflow | What is implemented | Decision boundary |
+|---|---|---|
+| Institution and deposit intake | Onboarding, obligation context, FDR/RPGF/RTGS/online/legacy records, integer-paise amounts | Imported CSV records remain DRAFT |
+| Evidence | Bounded authenticated PDF upload, immutable originals and SHA-256, quarantine, ClamAV, digital extraction and Tesseract OCR | Failed or pending scanning cannot satisfy proof requirements |
+| Review and correction | Protected previews, annotations, discrepancy disposition, independent transcription confirmation and retained history | Workers/AI cannot accept registration or claim authenticity |
+| Provisional evaluation | Versioned APH 2024-27 fixtures with citations and unknown-context review | Not a complete legal interpretation or certification |
+| Source checks | Persisted HTTP requests, retries, signed responses and field comparison against an independent fictional ledger | A sandbox match is not real bank confirmation |
+| Maturity and replacement | Configurable reminders, local SMTP, independent renewal/replacement authorization and lineage | Replacement does not release funds |
+| Release cases | Evidence requirements, scoped PGRC/Vigilance/Grants tasks, blocking holds, independent approval and type-scoped issuance | Outputs are synthetic NOC/sanction documents, not settlement |
+| Reporting and follow-up | Scoped totals, search/pagination, audited safe CSV, interventions, acknowledgement and escalation | Product SLAs are not statutory deadlines; acknowledgement is not approval |
+| Access and audit | OIDC roles plus institution/case/bureau scope, version/idempotency checks, decision actor and reason | Operator access cannot make financial decisions |
+
+These are implementation descriptions, not a claim that every path passed in the latest
+recording or hosted CI. The [acceptance map](docs/SIH_ACCEPTANCE.md) names the relevant
+checks; [verification notes](docs/VERIFICATION.md) separate current CI evidence from older
+local qualification.
+
+## Run the local full stack
+
+Requires Docker with Compose. Python 3.12+ is needed for host-side scripts/tests; Node 24
+is needed for frontend development. Do not expose this development stack publicly.
+
+```bash
 python scripts/bootstrap.py
 docker compose up --build -d
 docker compose ps
 ```
 
-Open http://localhost:8088. Identity provider: http://localhost:8081. Initial antivirus
-definitions and image pulls can take several minutes. Files stay quarantined until the
-real scanner succeeds. Credentials are randomly generated in ignored `.env` (never commit
-or share it). Users: `institution`, `other-institution`, `reviewer`, `pgrc`, `vigilance`,
-`approver`, `issuer`, `auditor`, `operator`. Match user to `DEMO_<USER>_PASSWORD` in `.env`
-(replace hyphens in the username with underscores).
-`institution` owns the synthetic seeded institution; other accounts have explicit scopes.
-Onboarding a new institution does not automatically assign reviewers; sign in as operator
-and use its audited scope-assignment workspace. The provisioning CLI remains available.
+- Portal: `http://localhost:8088`
+- Identity provider: `http://localhost:8081`
+- Fictional sandbox API: `http://localhost:8092/docs`
+- Mailpit captured inbox: `http://localhost:8025` (SMTP `localhost:11025`)
 
-All dependency ports bind loopback; do not expose this development stack publicly.
-PostgreSQL :55432, Redis :56379, private S3 :59000, ClamAV :53310. Object storage uses
-SeaweedFS behind the standard S3 interface (ADR-021). API internal OpenAPI `/openapi.json`.
-The browser only calls real API endpoints, and uses Keycloak authorization code + PKCE.
+Bootstrap generates credentials in ignored `.env`. Never commit, screenshot or share it.
+Accounts are `institution`, `other-institution`, `reviewer`, `pgrc`, `vigilance`, `approver`,
+`issuer`, `auditor` and `operator`. Match each to `DEMO_<USER>_PASSWORD`, replacing hyphens
+with underscores. New institutions need explicit operator-assigned officer scope.
 
-## Development and verification
+Initial image pulls and antivirus definitions can take several minutes. Do not bypass
+quarantine to make a demo faster. Generate visibly fictional PDFs using
+`python scripts/generate_fixtures.py` in the installed environment.
 
-```powershell
-uv venv
-uv pip install -r requirements.lock
-uv pip install --no-deps -e .
+All dependency ports bind loopback: PostgreSQL `55432`, Redis `56379`, S3-compatible
+SeaweedFS `59000`, ClamAV `53310`. Original financial references use a keyed digest and
+last four digits; future real reconciliation needs managed-key design and authorization.
+
+## Development and checks
+
+```bash
+python -m venv .venv
+# Activate .venv using your shell's normal activation command.
+python -m pip install -r requirements.lock
+python -m pip install --no-deps -e .
 npm ci --prefix apps/web
-.venv\Scripts\python scripts/export_openapi.py
-npm run contracts --prefix apps/web
+npm run typecheck --prefix apps/web
 npm run build --prefix apps/web
-.venv\Scripts\ruff check apps/api scripts tests
-.venv\Scripts\python scripts/local.py --test -m pytest -q -m "not browser"
-```
-
-Integration tests create/migrate only the dedicated `sentinel_test` database and preserve
-unique synthetic rows. They authenticate against actual Keycloak and use actual S3 and
-ClamAV. Unit tests can run without the stack: `pytest tests/test_rules.py`.
-`scripts/local.py` loads ignored credentials without echoing them. Windows background
-Celery uses `--pool=solo`; the Docker worker is the normal development path.
-
-```powershell
+ruff check --no-cache apps/api scripts tests
 docker compose --profile test run --rm test
+python scripts/local.py -m pytest -q -m browser
 ```
 
-Compose test is the equivalent Linux runner. The portal never uses password grant;
-the development realm's test-only client does so for reproducible API tests. Production
-startup is deliberately gated. See SECURITY_MODEL.md for qualification work.
+The backend suite uses a dedicated `sentinel_test` database and actual local services.
+The browser suite is separate and needs the live portal. Unit rules can run without the
+stack: `pytest tests/test_rules.py`. For containerized lint, use
+`docker compose run --rm --no-deps api ruff check --no-cache apps/api scripts tests`.
+The API container stays read-only; lint must not try to cache in `/app`.
 
-## Boundaries
+[Verification notes](docs/VERIFICATION.md) explain CI, local checks, safe recovery and
+what has not been requalified. Never delete persistent volumes containing needed data.
 
-Money is INR integer paise. Original financial references are not retained: keyed digest
-+ last four, with HMAC version. Canonical reference reconciliation needs future managed-key
-encryption. Evidence uploads are immutable originals; new evidence can explicitly supersede
-old evidence while preserving it. Rules are narrowly scoped, versioned, provisional APH
-2024-27 fixtures. Unknown legal context requires review. Manual review never claims bank
-authenticity. AI/workers cannot authorize regulatory or financial decisions.
+## Optional local AI
 
-The Release cases tab now demonstrates scoped PGRC/Vigilance/Grants clearances,
-independent approval and type-specific synthetic issuance. Only synthetic NOC/sanction
-outputs are generated; they carry no financial authority and do not mark settlement.
-The same tab provides maturity monitoring and authorized replacement/renewal lineage.
+Ollama support is opt-in, disabled by default, and uses no configured external AI vendor.
+Set `AI_ASSIST_ENABLED=true` and `AI_BASE_URL` in ignored `.env`, install the configured
+model, then recreate API/worker. See the existing [runbook](docs/SIH_DEMO_RUNBOOK.md) and
+[measurements](docs/MEASUREMENTS.md) before presenting it. Proposals must be tied to source
+text and independently confirmed. No extraction-accuracy improvement is claimed.
 
-Reports includes complete-scope totals, paginated search, safe audited CSV downloads and
-measured synthetic case timings. Policy changes trigger explicit fresh scrutiny; historic
-reviews are retained. Broader programme fixtures remain provisional, with unknown/aggregate
-contexts routed to human review. Financial holds require external-body NOC evidence.
+## Documentation map
 
-For a newly onboarded institution, an operator assigns a reviewer through
-`scripts/grant_scope.py` (run via `scripts/local.py`, use `--help`). It requires exact
-OIDC subject, role, institution/case/bureau scope, reason and optional expiry. No user
-self-service can grant officer roles. It does not authorize financial decisions.
+- [Judge guide](docs/JUDGE_GUIDE.md): problem, workflow, differentiation and evidence limits.
+- [Current architecture](ARCHITECTURE.md): implementation map and security boundaries.
+- [Demo runbook](docs/SIH_DEMO_RUNBOOK.md): role-by-role demonstration steps.
+- [Requirement coverage](docs/PROBLEM_STATEMENT_COVERAGE.md): requested capability and remaining acceptance.
+- [Verification](docs/VERIFICATION.md), [status](docs/STATUS.md), [measurements](docs/MEASUREMENTS.md): separate current and historical evidence.
+- [Acceptance scenarios](docs/SIH_ACCEPTANCE.md) and [architecture decisions](docs/ARCHITECTURE_DECISIONS.md).
+- [Historical blueprint](docs/ARCHITECTURE_BLUEPRINT.md): original design, not the current implementation inventory.
 
-## Documents and optional local AI
+## Before any real deployment
 
-The worker scans with ClamAV, extracts digital PDF fields and runs real Tesseract OCR
-for scanned pages. The portal provides protected page previews, bounded evidence
-annotations, independently confirmed transcription corrections and discrepancy disposition.
-Generate realistic samples with `python scripts/generate_fixtures.py` in the installed
-environment; all resulting PDFs are visibly synthetic and stored under ignored `.local/`.
-See [executed measurements](docs/MEASUREMENTS.md) for the tiny corpus and limitations.
-
-Optional local Ollama: set `AI_ASSIST_ENABLED=true` and `AI_BASE_URL` in ignored `.env`,
-pull `qwen2.5:0.5b`, then recreate API/worker. Docker Desktop can reach an installed host
-server at `http://host.docker.internal:11434` (verified here). Alternatively use the
-Compose `ai` profile and `AI_BASE_URL=http://ollama:11434`; the model service is optional
-because its image is large. No external AI vendor is configured. Proposals are strictly
-advisory; source text and human confirmation govern their use.
-
-The connected bank/AICTE sandbox is a real HTTP API with an independent persistent
-fictional ledger/registry, separate database permissions, authenticated signed exchanges,
-pending/retry/dead-letter states, and issuer-triggered reconciliation after human issuance.
-It never sets BANK_CONFIRMED or RELEASED. The old echo-only fixture endpoint is retained
-for historical regression compatibility; its interactive UI controls have been removed.
-Genuine external integrations remain authorization-gated.
-
-Use [SIH demo runbook](docs/SIH_DEMO_RUNBOOK.md) and [acceptance map](docs/SIH_ACCEPTANCE.md).
-Sandbox API: http://localhost:8092/docs. Real SMTP test inbox: http://localhost:8025
-(SMTP localhost:11025); all recipients are fictional `.invalid` addresses and no relay
-to real recipients is configured. The source fixture admin key is separate from the
-portal client key and is not supplied to its runtime. Local protocol assumptions and
-verified fields are explicit in API_CONTRACTS.md.
-
-Legacy import previews and atomically commits validated CSV as DRAFT records. The
-operator workspace assigns/revokes scoped officers with reasons and bounded validity;
-operator status itself cannot make financial decisions or access evidence.
-
-Clean-start qualification: `.venv\Scripts\python scripts/fresh_acceptance.py` creates a
-clean source export, new credentials and isolated fresh volumes, builds the service images,
-runs actual backend network tests and stops only that generated project. Supply a recent
-`--snapshot YYYYMMDDTHHMMSSZ` only for the documented signed-metadata clock workaround.
-The live demo data is retained. The script does not claim a hosted CI run or cold-stack
-browser run; the browser suite independently tests the live portal.
-
-If a development Docker VM clock lags signed Debian repository metadata, this session
-needed `docker compose build --build-arg APT_MAX_FUTURE_SECONDS=7200 api`. Default builds
-retain strict 10-second tolerance. Package signatures/expiry checks stay enabled; fix
-host/VM time synchronization before any production qualification.
-
-Never run destructive volume resets on any environment with needed data. For local
-restarts use `docker compose stop` / `docker compose up -d`; named volumes retain records.
-
-## Operational qualification
-
-The synthetic flow includes bureau clearances, independent sign-off, protected sample
-issuance, replacement lineage, evidence adjudication, notifications and reports. See
-[operations runbook](docs/OPERATIONS_RUNBOOK.md) for recovery, scoped provisioning,
-trace export, restore/load commands and production activation requirements. The runtime
-uses restricted DB credentials and a minimal environment; operator/IdP/demo passwords
-are excluded. Local objects/history are retained; no automated deletion exists.
-
-`DECISION_MFA_REQUIRED=true` enables the recent signed-IdP-method/authentication-time
-gate for approval/issuance. This flag defaults to `false` for the synthetic demo. Actual
-production MFA enrollment/step-up and policy/legal activation remain separate work.
-
-Full browser suite: `.venv\Scripts\python scripts/local.py -m pytest -q -m browser`.
-Docker includes Tesseract and is the canonical full backend test runner. Native Windows
-OCR tests need Tesseract on PATH. Test mode disables optional AI; the connected model
-has a separate smoke test. Browser CI is configured; no remote CI run is claimed.
-
-The current base uses Debian Trixie and build-installer pip 26.2.2; the final runtime
-excludes pip/ensurepip. For metadata signed ahead of the VM
-clock, this session used `docker compose build --build-arg DEBIAN_SNAPSHOT=20261022T000000Z api`.
-APT fails on any repository error and keeps signature/expiry checks enabled. Refresh
-snapshot dates deliberately and fix time synchronization before production qualification.
+Obtain policy-owner review, official integration contracts and credentials, real identity
+assurance, TLS, approved encryption/KMS and retention, independent security assessment,
+operational ownership and representative consented pilot evidence. Local recovery drills
+are not production RPO/RTO commitments. Synthetic measurements are not evidence of human
+time savings, legal compliance, bank authenticity or production accuracy.
