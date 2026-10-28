@@ -21,7 +21,7 @@ Additional acceptance: operator grants/revocations require explicit valid scope 
 CSV preview/commit is atomic and DRAFT-only, and a clean source export boots in isolated
 fresh volumes with new generated credentials and runs the full backend network suite.
 The cold backend suite and the live browser suite are distinct evidence; neither is
-represented as a hosted CI run. No Git remote is configured in this workspace.
+represented as a hosted CI run. The original local qualification did not claim hosted CI. Current remote CI status and review checks are recorded in VERIFICATION.md.
 
 The portal's mature software modules are not replaced by canned success responses.
 Authentication, DB transactions, file storage/scanning, OCR, policy evaluation, roles,
